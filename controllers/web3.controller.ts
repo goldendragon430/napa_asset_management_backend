@@ -4,7 +4,7 @@ import ApiResponse from "../utils/api-response";
 import Moralis from "moralis"
 import { EvmChain } from "@moralisweb3/common-evm-utils";
 import { ethers } from "ethers"
-import commonTokenAbi from "../web3Utils/abis/tokenAbi.json"
+// import commonTokenAbi from "../web3Utils/abis/tokenAbi.json"
 
 // 1. transaction history - DONE
 // 2. wallet balance - both (1. custom and 2. native) DONE
