@@ -1,10 +1,10 @@
 // web3 functions will come in this file
 
 import ApiResponse from "../utils/api-response";
-import Moralis from "moralis"
+import Moralis from "moralis";
 import { EvmChain } from "@moralisweb3/common-evm-utils";
-import { ethers } from "ethers"
-import commonTokenAbi from "../web3Utils/abis/tokenAbi.json"
+import { ethers } from "ethers";
+import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
 
 // 1. transaction history - DONE
 // 2. wallet balance - both (1. custom and 2. native) DONE
@@ -15,20 +15,21 @@ import commonTokenAbi from "../web3Utils/abis/tokenAbi.json"
 // 7. import wallet.
 // 8. Import NFTs
 
-
-
 const transactionHistory = async (req, res) => {
   try {
     await Moralis.start({
-      apiKey: "D8Kfm2KtjFHVEpqvPmTVgaNLvY8TFEhrIBi8h71wjcTfFIdlmSKFlYJcEGATK8dr"
+      apiKey: process.env.API_KEY,
     });
 
     const response = await Moralis.EvmApi.transaction.getWalletTransactions({
-      "chain": (req.params.chainId).toString(),
-      "address": (req.params.walletAddress).toString()
+      chain: req.params.chainId.toString(),
+      address: req.params.walletAddress.toString(),
     });
 
-    console.log(response, `All Transactions of ${(req.params.walletAddress).toString()}.`);
+    console.log(
+      response,
+      `All Transactions of ${req.params.walletAddress.toString()}.`
+    );
 
     ApiResponse.successResponseWithData(
       res,
@@ -41,35 +42,47 @@ const transactionHistory = async (req, res) => {
   }
 };
 
+/*
+  request: 
+  params {
+
+  },
+  expected response: {
+
+  }
+*/
 
 const nativeTokenWalletBalance = async (req, res) => {
   try {
     await Moralis.start({
-      apiKey: "D8Kfm2KtjFHVEpqvPmTVgaNLvY8TFEhrIBi8h71wjcTfFIdlmSKFlYJcEGATK8dr"
+      apiKey: process.env.API_KEY,
     });
 
-    const address = req.params.walletAddress;
+    console.log("req query", req.query);
+
+    const address = req.query.walletAddress;
 
     let chain;
-    if (req.params.chainId == 0) {
+    if (req.query.chainId == 0) {
       chain = EvmChain.ETHEREUM;
-    } else if (req.params.chainId == 1) {
+    } else if (req.query.chainId == 1) {
       chain = EvmChain.GOERLI;
-    } else if (req.params.chainId == 2) {
+    } else if (req.query.chainId == 2) {
       chain = EvmChain.SEPOLIA;
     }
     const response = await Moralis.EvmApi.balance.getNativeBalance({
       address,
-      chain
+      chain,
     });
 
-    console.log(response, `Balance of ${(req.params.walletAddress).toString()}. ${response}`);
-
-    ApiResponse.successResponseWithData(
-      res,
-      "Balance fetched successfully",
-      { transactions: response }
+    console.log(
+      response,
+      `Balance of ${req.query.walletAddress.toString()}. ${response}`
     );
+
+    ApiResponse.successResponseWithData(res, "Balance fetched successfully", {
+      transactions: response,
+    });
   } catch (error) {
     console.log(error, "Error while Fetching balance");
     res.status(503).send();
@@ -79,7 +92,7 @@ const nativeTokenWalletBalance = async (req, res) => {
 const customTokenWalletBalance = async (req, res) => {
   try {
     await Moralis.start({
-      apiKey: "D8Kfm2KtjFHVEpqvPmTVgaNLvY8TFEhrIBi8h71wjcTfFIdlmSKFlYJcEGATK8dr"
+      apiKey: process.env.API_KEY,
     });
 
     let chain;
@@ -92,12 +105,15 @@ const customTokenWalletBalance = async (req, res) => {
     }
 
     const response = await Moralis.EvmApi.token.getWalletTokenBalances({
-      "chain": chain,
-      "tokenAddresses": [(req.params.tknAddress).toString()],
-      "address": req.params.walletAddress
+      chain: chain,
+      tokenAddresses: [req.params.tknAddress.toString()],
+      address: req.params.walletAddress,
     });
 
-    console.log(response, `Balance of ${(req.params.walletAddress).toString()}. ${response}`);
+    console.log(
+      response,
+      `Balance of ${req.params.walletAddress.toString()}. ${response}`
+    );
 
     ApiResponse.successResponseWithData(
       res,
@@ -110,19 +126,15 @@ const customTokenWalletBalance = async (req, res) => {
   }
 };
 
-
 const createWallet = async (req, res) => {
   try {
-
     const response = ethers.Wallet.createRandom();
 
     console.log(response, "Wallet creation response.");
 
-    ApiResponse.successResponseWithData(
-      res,
-      "Wallet created successfully",
-      { wallet: response }
-    );
+    ApiResponse.successResponseWithData(res, "Wallet created successfully", {
+      wallet: response,
+    });
   } catch (error) {
     console.log(error, "Error while Fetching creating a Wallet");
     res.status(503).send();
@@ -170,4 +182,9 @@ const createWallet = async (req, res) => {
 //   }
 // };
 
-module.exports = { transactionHistory, nativeTokenWalletBalance, customTokenWalletBalance, createWallet };
+module.exports = {
+  transactionHistory,
+  nativeTokenWalletBalance,
+  customTokenWalletBalance,
+  createWallet,
+};
