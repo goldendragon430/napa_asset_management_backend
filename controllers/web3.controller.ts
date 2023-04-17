@@ -17,10 +17,6 @@ import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
 
 const transactionHistory = async (req, res) => {
   try {
-    await Moralis.start({
-      apiKey: process.env.API_KEY,
-    });
-
     const response = await Moralis.EvmApi.transaction.getWalletTransactions({
       chain: req.params.chainId.toString(),
       address: req.params.walletAddress.toString(),
@@ -54,10 +50,6 @@ const transactionHistory = async (req, res) => {
 
 const nativeTokenWalletBalance = async (req, res) => {
   try {
-    await Moralis.start({
-      apiKey: process.env.API_KEY,
-    });
-
     console.log("req query", req.query);
 
     const address = req.query.walletAddress;
@@ -91,10 +83,6 @@ const nativeTokenWalletBalance = async (req, res) => {
 
 const customTokenWalletBalance = async (req, res) => {
   try {
-    await Moralis.start({
-      apiKey: process.env.API_KEY,
-    });
-
     let chain;
     if (req.params.chainId == 0) {
       chain = EvmChain.ETHEREUM;
