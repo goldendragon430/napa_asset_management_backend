@@ -2,17 +2,17 @@
 
 import ApiResponse from "../utils/api-response";
 import Moralis from "moralis";
-import { EvmChain } from "@moralisweb3/common-evm-utils";
-import { ethers } from "ethers";
+import { ethers, utils } from "ethers";
 import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
+import commonNftAbi from "../web3Utils/abis/nftAbi.json";
 
 // 1. transaction history - DONE
 // 2. wallet balance - both (1. custom and 2. native) DONE
 // 3. create Wallet - Done
 // 4. send & Receive Tokens - Done
-// 5. switching chain.
-// 6. import tokens
-// 7. import wallet.
+// 5. switching chain. - Will be Done from front-end side
+// 6. import tokens - Done
+// 7. import wallet. - Done
 // 8. Import NFTs
 
 
@@ -426,38 +426,207 @@ const sendCustomToken = async (req, res) => {
       },
   expected response: {
     {
+        "code": 200,
+        "responseTimeStamp": "17-04-2023 04:56:37:5637",
+        "message": "Token Imported successfully",
+        "data": {
+            "tokenData": {
+                "decimals": 18,
+                "balance": "400000000000000000000",
+                "symbol": "NAPA",
+                "name": "NAPA Society"
+            }
+        }
+    }
+}
+*/
+
+const importToken = async (req, res) => {
+  try {
+    global.ethersProvider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/1v5h6i5Tpuc4-xvrPVnuFHn7xl6jX2qd");
+    let wallet = new ethers.Wallet(req.query.private_key);
+    let walletSigner = wallet.connect(global.ethersProvider);
+
+    let contract = new ethers.Contract(
+      (req.query.contract_address).toString(),
+      commonTokenAbi.abi,
+      walletSigner
+    )
+
+    const decimals = await contract.decimals();
+    const balance = (await contract.balanceOf((req.query.account_address).toString())).toString();
+    const symbol = await contract.symbol();
+    const name = await contract.name();
+    console.log(name, symbol, balance, decimals, "-=-=-")
+
+    ApiResponse.successResponseWithData(res, "Token Imported successfully", {
+      tokenData: { decimals, balance, symbol, name },
+    });
+
+  } catch (error) {
+    console.log(error, "Error while Importing Token");
+    res.status(503).send();
+  }
+};
+
+
+
+/*
+  (6) importAccountFromPrivateKey()
+  request: 
+  params: {
+      "privateKey":YOUR_PRIVATE_KEY
+      },
+  expected response: {
+    {
     "code": 200,
-    "responseTimeStamp": "17-04-2023 12:30:44:3044",
-    "message": "Balance fetched successfully",
+    "responseTimeStamp": "17-04-2023 05:08:42:842",
+    "message": "Wallet successfully imported from Privatekey ",
     "data": {
-        "transactions": {
-            "balance": "6612076634099694241"
+        "tokenData": {
+            "response": "0xFee897E3a3F12a1550E73b8437C20301325Cc98F"
+        }
+    }
+  }
+}
+*/
+
+const importAccountFromPrivateKey = async (req, res) => {
+  try {
+    const wallet = new ethers.Wallet(req.query.privateKey);
+    wallet.getAddress().then(async (response: any) => {
+      console.log(await response, "-==-publicKey-==-");
+      ApiResponse.successResponseWithData(res, "Wallet successfully imported from Privatekey ", {
+        tokenData: { response },
+      });
+    }).catch((e: any) => {
+      console.log(e, "Error while importing wallet");
+    })
+  } catch (error) {
+    console.log(error, "Error while Importing Wallet");
+    res.status(503).send();
+  }
+};
+
+
+/*
+  (7) importAccountFromPhrase()
+  request: 
+  params: {
+      "phrase":YOUR_SECRET_PHRASE
+      },
+  expected response: {
+    {
+    "code": 200,
+    "responseTimeStamp": "17-04-2023 05:52:40:5240",
+    "message": "Wallet successfully imported By Phrase ",
+    "data": {
+        "tokenData": {
+            "secondAccount": {
+                "privateKey": "0x9ca920272be13eebad1866dab88bc6d6e7fb65be95b5640d6a89d787f33dc2b4",
+                "publicKey": "0x03f8c54504ffda4388db4e03fe564d89e392109a3480d03818c931e9d05640f7a3",
+                "parentFingerprint": "0xfc250dbb",
+                "fingerprint": "0xfaa9a2b4",
+                "address": "0xFBE446CcCfAfA2da17F327783C6AFf627f50445C",
+                "chainCode": "0xcd908155b1ee43a2f5ba22cce3a334608fe9081b93bbd2f91812ee691063c087",
+                "index": 1,
+                "depth": 5,
+                "mnemonic": {
+                    "phrase": "ribbon major wrap acid oval admit stuff review hair prevent usage purchase",
+                    "path": "m/44'/60'/0'/0/1",
+                    "locale": "en"
+                },
+                "path": "m/44'/60'/0'/0/1"
+            }
+        }
+      }
+    }
+}
+*/
+
+const importAccountFromPhrase = async (req, res) => {
+  try {
+    const hdNode = utils.HDNode.fromMnemonic(req.query.phrase);
+
+    const firstAccount = hdNode.derivePath(`m/44'/60'/0'/0/0`); // This returns a new HDNode
+    const secondAccount = hdNode.derivePath(`m/44'/60'/0'/0/1`);
+    const thirdAccount = hdNode.derivePath(`m/44'/60'/0'/0/2`);
+    const fourthAccount = hdNode.derivePath(`m/44'/60'/0'/0/3`);
+
+    console.log("First Account", firstAccount);
+    console.log("Second Account ", secondAccount);
+    console.log("Third Account", thirdAccount);
+    console.log("Fourth Account", fourthAccount);
+
+    ApiResponse.successResponseWithData(res, "Wallet successfully imported By Phrase ", {
+      tokenData: { firstAccount },
+    });
+  } catch (error) {
+    console.log(error, "Error while Importing Wallet");
+    res.status(503).send();
+  }
+};
+
+
+/*
+  (7) importAccountFromPhrase()
+  request: 
+  params: {
+      "contract_address":0x7bBBa86B912C40a92eca40369B5813cf87153251,
+      "private_key":YOUR_PRIVATE_KEY,
+      "tknId":68
+      },
+  expected response: {
+    {
+    "code": 200,
+    "responseTimeStamp": "17-04-2023 06:59:35:5935",
+    "message": "NFT imported Successfully ",
+    "data": {
+        "tokenData": {
+            "nftData": "https://gateway.pinata.cloud/ipfs/QmZ5aBbubHi3U2ssjWxj6x3nMEXFVqMzK7zNeGahpGg1VS"
         }
     }
 }
 }
 */
 
-// const importToken = async (req, res) => {
+const importNFTs = async (req, res) => {
+  try {
+
+    global.ethersProvider = new ethers.providers.JsonRpcProvider("https://eth-goerli.g.alchemy.com/v2/XWUI0fZ3Egz60cSzVS3bCb_QDbDnmYb3");
+
+    let wallet = new ethers.Wallet(req.query.private_key)
+    let walletSigner = wallet.connect(global.ethersProvider)
+
+    let contract = new ethers.Contract(
+      req.query.contract_address,
+      commonNftAbi.abi,
+      walletSigner
+    )
+
+    const nftData = await contract.tokenURI(req.query.tknId);
+    console.log(await nftData, "NFT data....!");
+
+    ApiResponse.successResponseWithData(res, "NFT imported Successfully ", {
+      tokenData: { nftData },
+    });
+  } catch (error) {
+    console.log(error, "Error while Importing Wallet");
+    res.status(503).send();
+  }
+};
+
+
+// const switchNetwork = async (req, res) => {
 //   try {
-//     // Convert a number to a hexadecimal string with:
-//     const hexString = (Number(req.query.chainId)).toString(16);
-//     const convertedHEX = "0x" + hexString
 
-//     const response = await Moralis.EvmApi.balance.getNativeBalance({
-//       "chain": convertedHEX,
-//       "address": (req.query.walletAddress).toString()
-//     });
-//     console.log(
-//       response,
-//       `Balance of ${response}`
-//     );
+//     global.ethersProvider = new ethers.providers.JsonRpcProvider("https://eth-goerli.g.alchemy.com/v2/XWUI0fZ3Egz60cSzVS3bCb_QDbDnmYb3");
 
-//     ApiResponse.successResponseWithData(res, "Balance fetched successfully", {
-//       NativeTokenWalletBalance: response,
+//     ApiResponse.successResponseWithData(res, "NFT imported Successfully ", {
+//       tokenData: {  },
 //     });
 //   } catch (error) {
-//     console.log(error, "Error while Fetching balance");
+//     console.log(error, "Error while Importing Wallet");
 //     res.status(503).send();
 //   }
 // };
@@ -470,5 +639,8 @@ module.exports = {
   createWallet,
   sendNativeToken,
   sendCustomToken,
-  // importToken
+  importToken,
+  importAccountFromPrivateKey,
+  importAccountFromPhrase,
+  importNFTs
 };
