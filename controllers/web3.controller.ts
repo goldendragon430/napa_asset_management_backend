@@ -292,12 +292,12 @@ const createWallet = async (req, res) => {
 
 const sendNativeToken = async (req, res) => {
   try {
-    let wallet = new ethers.Wallet((req.query.private_key).toString());
-    let walletSigner = wallet.connect(global.ethersProvider);
+    const wallet = new ethers.Wallet((req.query.private_key).toString());
+    const walletSigner = wallet.connect(global.ethersProvider);
 
     global.ethersProvider.getGasPrice().then(async (currentGasPrice: any) => {
-      let gas_price = ethers.utils.hexlify((currentGasPrice));
-      let gas_limit: any = 100000;
+      const gas_price = ethers.utils.hexlify((currentGasPrice));
+      const gas_limit: any = 100000;
       const tx = {
         from: req.query.send_account,
         to: req.query.to_address,
@@ -377,19 +377,19 @@ const sendNativeToken = async (req, res) => {
 const sendCustomToken = async (req, res) => {
   console.time();
   try {
-    let wallet = new ethers.Wallet((req.query.private_key).toString());
-    let walletSigner = wallet.connect(global.ethersProvider);
+    const wallet = new ethers.Wallet((req.query.private_key).toString());
+    const walletSigner = wallet.connect(global.ethersProvider);
 
     try {
       // general token send
-      let contract = new ethers.Contract(
+      const contract = new ethers.Contract(
         (req.query.contract_address).toString(),
         commonTokenAbi.abi,
         walletSigner
       )
 
       // How many tokens?
-      let numberOfTokens = ethers.utils.parseUnits(req.query.send_token_amount, 18)
+      const numberOfTokens = ethers.utils.parseUnits(req.query.send_token_amount, 18)
       console.log(`numberOfTokens: ${numberOfTokens}`)
 
       // Send tokens
@@ -441,10 +441,10 @@ const sendCustomToken = async (req, res) => {
 
 const importToken = async (req, res) => {
   try {
-    let wallet = new ethers.Wallet(req.query.private_key);
-    let walletSigner = wallet.connect(global.ethersProvider);
+    const wallet = new ethers.Wallet(req.query.private_key);
+    const walletSigner = wallet.connect(global.ethersProvider);
 
-    let contract = new ethers.Contract(
+    const contract = new ethers.Contract(
       (req.query.contract_address).toString(),
       commonTokenAbi.abi,
       walletSigner
@@ -589,10 +589,10 @@ const importAccountFromPhrase = async (req, res) => {
 
 const importNFTs = async (req, res) => {
   try {
-    let wallet = new ethers.Wallet(req.query.private_key)
-    let walletSigner = wallet.connect(global.ethersProvider)
+    const wallet = new ethers.Wallet(req.query.private_key)
+    const walletSigner = wallet.connect(global.ethersProvider)
 
-    let contract = new ethers.Contract(
+    const contract = new ethers.Contract(
       req.query.contract_address,
       commonNftAbi.abi,
       walletSigner
@@ -669,7 +669,7 @@ const importNFTs = async (req, res) => {
 
 const switchNetwork = async (req, res) => {
   try {
-    let data = global.ethersProvider;
+    const data = global.ethersProvider;
     let response: any = "nothing";
 
     console.log(data, "Network Before.");
@@ -769,7 +769,7 @@ const switchNetwork = async (req, res) => {
 
 const getCurrentNetwork = async (req, res) => {
   try {
-    let data = global.ethersProvider;
+    const data = global.ethersProvider;
     console.log(data, "Network After.");
     ApiResponse.successResponseWithData(res, "Network fetched Successfully.", {
       currentNetwork: { data },
