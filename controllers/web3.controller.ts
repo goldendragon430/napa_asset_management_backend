@@ -6,6 +6,10 @@ import { ethers, utils } from "ethers";
 import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
 import commonNftAbi from "../web3Utils/abis/nftAbi.json";
 import { AllChainIdNew } from "../web3Utils/chainData";
+import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Utils/addresses";
+import napaTokenAbi from "../web3Utils/abis/napaTokenAbi.json"
+import napaStakingAbi from "../web3Utils/abis/stakingAbi.json"
+
 // 1. transaction history - DONE
 // 2. wallet balance - both (1. custom and 2. native) DONE
 // 3. create Wallet - Done
@@ -711,12 +715,8 @@ const switchNetwork = async (req, res) => {
   }
 };
 
-
-
-
-
 /*
-  (7) getCurrentNetwork()
+  (8) getCurrentNetwork()
   request: 
   params: {
       },
@@ -780,6 +780,228 @@ const getCurrentNetwork = async (req, res) => {
   }
 };
 
+/*
+  (10.1) stakeTokens()
+  request: 
+  params: {
+    plan:30 || 60 || 90 || 120,
+    address: "0xaBcDsaskjis786sadgsa7d65asdsaasas",
+    amount:10,
+    privateKey:" YOUR_PRIVATE_KEY"
+      },
+  expected response: {
+                "approvalResponse": {
+                "to": "0x245567d7CC4a7382FA5E69E73C647ce6a10bF8D4",
+                "from": "0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440",
+                "contractAddress": null,
+                "transactionIndex": 20,
+                "gasUsed": {
+                    "type": "BigNumber",
+                    "hex": "0xb4ee"
+                },"stakeResponse": {
+                "to": "0x652b61A82eC3eba8cA6b3c4B5836aE477F36BD3C",
+                "from": "0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440",
+                "contractAddress": null,
+                "transactionIndex": 22,
+                "gasUsed": {
+                    "type": "BigNumber",
+                    "hex": "0x03404a"
+                },
+  }
+*/
+
+const stakeNapaTokens = async (req, res) => {
+  try {
+    let error;
+    let approvalResponse;
+    let stakeResponse;
+    const decimals = 10 ** 18;
+    const amtInWei = req.query.amount * decimals;
+
+    let wallet = new ethers.Wallet((req.query.private_key).toString());
+    let walletSigner = wallet.connect(global.ethersProvider);
+
+    const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
+    const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
+
+    let userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
+    let userStakedAmt = userDeposit[1].toString();
+
+    if (userStakedAmt > 0) {
+      error = "Already staked for this plan";
+    }
+    else {
+      let isCorrectPlan = false;
+      if (Number(req.query.plan) === 30 || Number(req.query.plan) === 60 || Number(req.query.plan) === 90 || Number(req.query.plan) === 120) {
+        isCorrectPlan = true;
+      } else {
+        isCorrectPlan = false;
+      }
+
+      const userBal: number = await napaTokenCtr.balanceOf((req.query.address).toString());
+
+      if ((await userBal / decimals) > req.query.amount && await userBal > 0 && userStakedAmt <= 0 && Number(req.query.amount) > 0 && isCorrectPlan) {
+        await napaTokenCtr.approve(originalNapaStakingAddress, amtInWei.toString()).then(async (res) => {
+          approvalResponse = await res.wait();
+
+          if (req.query.plan == 30) {
+            await napaStakeCtr.stakeTokens(amtInWei.toString(), 30).then(async (res: any) => {
+              stakeResponse = await res.wait();
+            }).catch((e: any) => {
+              error = e + "Error while Staking";
+            })
+          }
+          else if (req.query.plan == 60) {
+            await napaStakeCtr.stakeTokens(amtInWei.toString(), 60).then(async (res: any) => {
+              stakeResponse = await res.wait();
+            }).catch((e: any) => {
+              error = e + "Error while Staking";
+            })
+          }
+          else if (req.query.plan == 90) {
+            await napaStakeCtr.stakeTokens(amtInWei.toString(), 90).then(async (res: any) => {
+              stakeResponse = await res.wait();
+            }).catch((e: any) => {
+              error = e + "Error while Staking";
+            })
+          }
+          else if (req.query.plan == 120) {
+            await napaStakeCtr.stakeTokens(amtInWei.toString(), 120).then(async (res: any) => {
+              stakeResponse = await res.wait();
+            }).catch((e: any) => {
+              error = e + "Error while Staking";
+            })
+          }
+        }).catch((e: any) => {
+          error = e + "Error while taking an Approval";
+        });
+      } else {
+        if (Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120) {
+          error = "Selected Wrong Plan,  Choose from (30,60,90 or 120) days";
+        }
+        if (Number(req.query.amount) <= 0) {
+          error = "please enter some amount";
+        }
+        if (userStakedAmt > 0) {
+          error = `you already have ${userStakedAmt / decimals} token stake`;
+        }
+        if (Number(await userBal / decimals) < Number(req.query.amount) && Number(await userBal) <= 0) {
+          error = `you have ${(await userBal).toString()} tokens which are less to stake! `;
+        }
+      }
+    }
+
+    ApiResponse.successResponseWithData(res, "Resposne From Stake.", {
+      stakingResponse: { approvalResponse, stakeResponse, error },
+    });
+
+  } catch (err) {
+    console.log(err, "Error while Staking.");
+    res.status(503).send();
+  }
+};
+
+
+
+// const unstakeNapaTokens = async (req, res) => {
+//   try {
+//     let error;
+//     let currentReward;
+//     let unStakeResponse;
+//     const decimals = 10 ** 18;
+
+//     let wallet = new ethers.Wallet((req.query.private_key).toString());
+//     let walletSigner = wallet.connect(global.ethersProvider);
+
+//     const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
+//     const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
+
+//     let userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
+//     let userStakedAmt = userDeposit[1].toString();
+//     currentReward = (Number((await napaStakeCtr.checkReward(req.query.plan)).toString()) / decimals).toFixed(8);
+
+//     //start Time
+//     const startDate = new Date(Number((userDeposit[2].toString()) * 1000));
+//     //end Time
+//     const endDate = new Date(Number((userDeposit[3].toString()) * 1000));
+//     //current Time
+//     var currentUnix = Math.round(+new Date() / 1000);
+
+
+//     if (userStakedAmt > 0) {
+//       error = "Already staked for this plan";
+//     }
+//     else {
+//       let isCorrectPlan = false;
+//       if (Number(req.query.plan) === 30 || Number(req.query.plan) === 60 || Number(req.query.plan) === 90 || Number(req.query.plan) === 120) {
+//         isCorrectPlan = true;
+//       } else {
+//         isCorrectPlan = false;
+//       }
+
+//       const userBal: number = await napaTokenCtr.balanceOf((req.query.address).toString());
+
+//       if ((await userBal / decimals) > req.query.amount && await userBal > 0 && userStakedAmt <= 0 && Number(req.query.amount) > 0 && isCorrectPlan) {
+//         await napaTokenCtr.approve(originalNapaStakingAddress, amtInWei.toString()).then(async (res) => {
+//           approvalResponse = await res.wait();
+
+//           if (req.query.plan == 30) {
+//             await napaStakeCtr.stakeTokens(amtInWei.toString(), 30).then(async (res: any) => {
+//               stakeResponse = await res.wait();
+//             }).catch((e: any) => {
+//               error = e + "Error while Staking";
+//             })
+//           }
+//           else if (req.query.plan == 60) {
+//             await napaStakeCtr.stakeTokens(amtInWei.toString(), 60).then(async (res: any) => {
+//               stakeResponse = await res.wait();
+//             }).catch((e: any) => {
+//               error = e + "Error while Staking";
+//             })
+//           }
+//           else if (req.query.plan == 90) {
+//             await napaStakeCtr.stakeTokens(amtInWei.toString(), 90).then(async (res: any) => {
+//               stakeResponse = await res.wait();
+//             }).catch((e: any) => {
+//               error = e + "Error while Staking";
+//             })
+//           }
+//           else if (req.query.plan == 120) {
+//             await napaStakeCtr.stakeTokens(amtInWei.toString(), 120).then(async (res: any) => {
+//               stakeResponse = await res.wait();
+//             }).catch((e: any) => {
+//               error = e + "Error while Staking";
+//             })
+//           }
+//         }).catch((e: any) => {
+//           error = e + "Error while taking an Approval";
+//         });
+//       } else {
+//         if (Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120) {
+//           error = "Selected Wrong Plan,  Choose from (30,60,90 or 120) days";
+//         }
+//         if (Number(req.query.amount) <= 0) {
+//           error = "please enter some amount";
+//         }
+//         if (userStakedAmt > 0) {
+//           error = `you already have ${userStakedAmt / decimals} token stake`;
+//         }
+//         if (Number(await userBal / decimals) < Number(req.query.amount) && Number(await userBal) <= 0) {
+//           error = `you have ${(await userBal).toString()} tokens which are less to stake! `;
+//         }
+//       }
+//     }
+
+//     ApiResponse.successResponseWithData(res, "Resposne From Stake.", {
+//       stakingResponse: { approvalResponse, stakeResponse, error },
+//     });
+
+//   } catch (err) {
+//     console.log(err, "Error while Staking.");
+//     res.status(503).send();
+//   }
+// };
+
 
 module.exports = {
   transactionHistory,
@@ -793,5 +1015,7 @@ module.exports = {
   importAccountFromPhrase,
   importNFTs,
   switchNetwork,
-  getCurrentNetwork
+  getCurrentNetwork,
+  stakeNapaTokens,
+  // unstakeNapaTokens
 };
