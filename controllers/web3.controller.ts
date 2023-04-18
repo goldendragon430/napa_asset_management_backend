@@ -5,7 +5,7 @@ import Moralis from "moralis";
 import { ethers, utils } from "ethers";
 import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
 import commonNftAbi from "../web3Utils/abis/nftAbi.json";
-
+import { AllChainIdNew } from "../web3Utils/chainData";
 // 1. transaction history - DONE
 // 2. wallet balance - both (1. custom and 2. native) DONE
 // 3. create Wallet - Done
@@ -13,7 +13,9 @@ import commonNftAbi from "../web3Utils/abis/nftAbi.json";
 // 5. switching chain. - Will be Done from front-end side
 // 6. import tokens - Done
 // 7. import wallet. - Done
-// 8. Import NFTs
+// 8. Import NFTs. - Done
+// 9. fetch Current Network. - Done
+// 10. stake & unstake. - Inprogress.
 
 
 /*
@@ -290,8 +292,6 @@ const createWallet = async (req, res) => {
 
 const sendNativeToken = async (req, res) => {
   try {
-    global.ethersProvider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/1v5h6i5Tpuc4-xvrPVnuFHn7xl6jX2qd");
-
     let wallet = new ethers.Wallet((req.query.private_key).toString());
     let walletSigner = wallet.connect(global.ethersProvider);
 
@@ -377,8 +377,6 @@ const sendNativeToken = async (req, res) => {
 const sendCustomToken = async (req, res) => {
   console.time();
   try {
-    global.ethersProvider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/1v5h6i5Tpuc4-xvrPVnuFHn7xl6jX2qd");
-
     let wallet = new ethers.Wallet((req.query.private_key).toString());
     let walletSigner = wallet.connect(global.ethersProvider);
 
@@ -443,7 +441,6 @@ const sendCustomToken = async (req, res) => {
 
 const importToken = async (req, res) => {
   try {
-    global.ethersProvider = new ethers.providers.JsonRpcProvider("https://eth-sepolia.g.alchemy.com/v2/1v5h6i5Tpuc4-xvrPVnuFHn7xl6jX2qd");
     let wallet = new ethers.Wallet(req.query.private_key);
     let walletSigner = wallet.connect(global.ethersProvider);
 
@@ -592,9 +589,6 @@ const importAccountFromPhrase = async (req, res) => {
 
 const importNFTs = async (req, res) => {
   try {
-
-    global.ethersProvider = new ethers.providers.JsonRpcProvider("https://eth-goerli.g.alchemy.com/v2/XWUI0fZ3Egz60cSzVS3bCb_QDbDnmYb3");
-
     let wallet = new ethers.Wallet(req.query.private_key)
     let walletSigner = wallet.connect(global.ethersProvider)
 
@@ -617,19 +611,174 @@ const importNFTs = async (req, res) => {
 };
 
 
-// const switchNetwork = async (req, res) => {
-//   try {
 
-//     global.ethersProvider = new ethers.providers.JsonRpcProvider("https://eth-goerli.g.alchemy.com/v2/XWUI0fZ3Egz60cSzVS3bCb_QDbDnmYb3");
 
-//     ApiResponse.successResponseWithData(res, "NFT imported Successfully ", {
-//       tokenData: {  },
-//     });
-//   } catch (error) {
-//     console.log(error, "Error while Importing Wallet");
-//     res.status(503).send();
-//   }
-// };
+/*
+  (7) switchNetwork()
+  request: 
+  params: {
+      id: 7, (between 1-7)
+      },
+  expected response: {
+        {
+    "code": 200,
+    "responseTimeStamp": "18-04-2023 12:55:30:5530",
+    "message": "Network switched Successfully.",
+    "data": {
+        "currentNetwork": {
+            "data": {
+                "_isProvider": true,
+                "_events": [],
+                "_emitted": {
+                    "block": -2
+                },
+                "formatter": {
+                    "formats": {
+                        "transaction": {},
+                        "transactionRequest": {},
+                        "receiptLog": {},
+                        "receipt": {},
+                        "block": {},
+                        "blockWithTransactions": {},
+                        "filter": {},
+                        "filterLog": {}
+                    }
+                },
+                "anyNetwork": false,
+                "_networkPromise": {},
+                "_maxInternalBlockNumber": -1024,
+                "_lastBlockNumber": -2,
+                "_pollingInterval": 4000,
+                "_fastQueryDate": 0,
+                "connection": {
+                    "url": "https://matic.getblock.io/acfb8004-9fb8-42c5-a5b2-da8000aaecfa/mainnet/"
+                },
+                "_nextId": 43,
+                "_network": {
+                    "name": "matic",
+                    "chainId": 137,
+                    "ensAddress": null
+                }
+            },
+            "response": "Sepolia test network"
+        }
+    }
+}
+}
+*/
+
+const switchNetwork = async (req, res) => {
+  try {
+    let data = global.ethersProvider;
+    let response: any = "nothing";
+
+    console.log(data, "Network Before.");
+
+    if ((req.query.id).toString() === "1") {
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[0].rpcURL);
+      response = AllChainIdNew[0].name;
+    } else if ((req.query.id).toString() === "2") {
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[1].rpcURL);
+      response = AllChainIdNew[1].name;
+    } else if ((req.query.id).toString() === "3") {
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[2].rpcURL);
+      response = AllChainIdNew[2].name;
+    } else if ((req.query.id).toString() === "4") {
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[3].rpcURL);
+      response = AllChainIdNew[3].name;
+    } else if ((req.query.id).toString() === "5") {
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[4].rpcURL);
+      response = AllChainIdNew[4].name;
+    } else if ((req.query.id).toString() === "6") {
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[5].rpcURL);
+      response = AllChainIdNew[5].name;
+    } else if ((req.query.id).toString() === "7") {
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[6].rpcURL);
+      response = AllChainIdNew[6].name;
+    } else {
+      console.log("Please select Correct N/w");
+      response = "Please select Correct N/w";
+    }
+
+    console.log(data, "Network After.");
+
+    ApiResponse.successResponseWithData(res, "Network switched Successfully.", {
+      currentNetwork: { data, response },
+    });
+  } catch (error) {
+    console.log(error, "Error while Switching the Network.");
+    res.status(503).send();
+  }
+};
+
+
+
+
+
+/*
+  (7) getCurrentNetwork()
+  request: 
+  params: {
+      },
+  expected response: {
+      {
+  "code": 200,
+  "responseTimeStamp": "18-04-2023 12:55:34:5534",
+  "message": "Network fetched Successfully.",
+  "data": {
+      "currentNetwork": {
+          "data": {
+              "_isProvider": true,
+              "_events": [],
+              "_emitted": {
+                  "block": -2
+              },
+              "formatter": {
+                  "formats": {
+                      "transaction": {},
+                      "transactionRequest": {},
+                      "receiptLog": {},
+                      "receipt": {},
+                      "block": {},
+                      "blockWithTransactions": {},
+                      "filter": {},
+                      "filterLog": {}
+                  }
+              },
+              "anyNetwork": false,
+              "_networkPromise": {},
+              "_maxInternalBlockNumber": -1024,
+              "_lastBlockNumber": -2,
+              "_pollingInterval": 4000,
+              "_fastQueryDate": 0,
+              "connection": {
+                  "url": "https://eth.getblock.io/acfb8004-9fb8-42c5-a5b2-da8000aaecfa/sepolia/"
+              },
+              "_nextId": 43,
+              "_network": {
+                  "name": "sepolia",
+                  "chainId": 11155111,
+                  "ensAddress": null
+              }
+          }
+      }
+  }
+}
+}
+*/
+
+const getCurrentNetwork = async (req, res) => {
+  try {
+    let data = global.ethersProvider;
+    console.log(data, "Network After.");
+    ApiResponse.successResponseWithData(res, "Network fetched Successfully.", {
+      currentNetwork: { data },
+    });
+  } catch (error) {
+    console.log(error, "Error while Switching the Network.");
+    res.status(503).send();
+  }
+};
 
 
 module.exports = {
@@ -642,5 +791,7 @@ module.exports = {
   importToken,
   importAccountFromPrivateKey,
   importAccountFromPhrase,
-  importNFTs
+  importNFTs,
+  switchNetwork,
+  getCurrentNetwork
 };

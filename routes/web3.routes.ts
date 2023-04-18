@@ -13,5 +13,7 @@ router.get("/importToken", Web3Controller.importToken);
 router.get("/importAccountFromPrivateKey", Web3Controller.importAccountFromPrivateKey);
 router.get("/importAccountFromPhrase", Web3Controller.importAccountFromPhrase);
 router.get("/importNFTs", Web3Controller.importNFTs);
+router.get("/switchNetwork", Web3Controller.switchNetwork);
+router.get("/getCurrentNetwork", Web3Controller.getCurrentNetwork);
 
 module.exports = router;
