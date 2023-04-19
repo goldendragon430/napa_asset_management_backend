@@ -8,6 +8,7 @@ import mysql from "mysql2";
 import setUpRoutes from "./routes/index.routes";
 import { SocketService } from "./services/index.services";
 import WebSocket from "ws";
+import { startMoralis } from "./utils/moralis";
 
 const httpServer = server.createServer(app);
 const wss = new WebSocket.Server({ server: httpServer });
@@ -15,6 +16,8 @@ const socketService = new SocketService(wss);
 
 dotenv.config({ path: "./.env" });
 global.SocketService = socketService;
+
+startMoralis();
 
 const socialArtPool = mysql.createPool({
   host: process.env.RDS_NAPA_HOSTNAME,
