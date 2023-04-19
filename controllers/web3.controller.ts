@@ -818,14 +818,14 @@ const stakeNapaTokens = async (req, res) => {
     const decimals = 10 ** 18;
     const amtInWei = req.query.amount * decimals;
 
-    let wallet = new ethers.Wallet((req.query.private_key).toString());
-    let walletSigner = wallet.connect(global.ethersProvider);
+    const wallet = new ethers.Wallet((req.query.private_key).toString());
+    const walletSigner = wallet.connect(global.ethersProvider);
 
     const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
     const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
 
-    let userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
-    let userStakedAmt = userDeposit[1].toString();
+    const userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
+    const userStakedAmt = userDeposit[1].toString();
 
     if (userStakedAmt > 0) {
       error = "Already staked for this plan";
