@@ -923,6 +923,7 @@ const stakeNapaTokens = async (req, res) => {
   }
 */
 
+
 const unstakeNapaTokens = async (req, res) => {
   try {
     let error = "No Errors";
@@ -978,6 +979,47 @@ const unstakeNapaTokens = async (req, res) => {
 };
 
 
+
+/*(10.3) fetchAccountsByIndex()
+request: 
+params: {
+  plan:30 || 60 || 90 || 120,
+  address: "0xc30e6da665e55Fc9a935A2D2B4be174281991C5E",
+  privateKey:" YOUR_PRIVATE_KEY"
+    },
+expected response: {
+     "unStakingResponse": {
+         "currentReward": 0.21243471748935505,
+         "unStakeResponse": {
+             "to": "0x652b61A82eC3eba8cA6b3c4B5836aE477F36BD3C",
+             "from": "0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440",
+             "contractAddress": null,
+             "transactionIndex": 15,
+             "gasUsed": {
+                 "type": "BigNumber",
+                 "hex": "0x01cce8"
+             },
+}
+*/
+
+
+const fetchAccountsByIndex = async (req, res) => {
+  try {
+    const hdNode = utils.HDNode.fromMnemonic(req.query.phrase);
+
+    const desiredAccount = hdNode.derivePath(`m/44'/60'/0'/0/${req.query.index}`);
+    console.log("First Account", desiredAccount);
+
+    ApiResponse.successResponseWithData(res, "Account successfully imported By Phrase and Index.", {
+      tokenData: { desiredAccount },
+    });
+  } catch (error) {
+    console.log(error, "Error while Importing Account");
+    res.status(503).send();
+  }
+};
+
+
 module.exports = {
   transactionHistory,
   nativeTokenWalletBalance,
@@ -992,5 +1034,6 @@ module.exports = {
   switchNetwork,
   getCurrentNetwork,
   stakeNapaTokens,
-  unstakeNapaTokens
+  unstakeNapaTokens,
+  fetchAccountsByIndex
 };
