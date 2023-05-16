@@ -238,9 +238,17 @@ const createWallet = async (req, res) => {
   try {
     const response = ethers.Wallet.createRandom();
     console.log(response, "Wallet creation response.");
-
+    console.log(response.address, "public Key.");
+    console.log(response._signingKey().privateKey, "private key.");
+    console.log(response._mnemonic().phrase, "MNEMONIC.");
+    const walletData = {
+      public_key:response.address,
+      private_key:response._signingKey().privateKey,
+      mnemonic:response._mnemonic().phrase
+    }
+    
     ApiResponse.successResponseWithData(res, "Wallet created successfully", {
-      CreateWallet: response,
+      CreateWallet: walletData,
     });
   } catch (error) {
     console.log(error, "Error while Fetching creating a Wallet");
