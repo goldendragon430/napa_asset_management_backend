@@ -88,7 +88,10 @@ const transactionHistory = async (req, res) => {
     );
   } catch (error) {
     console.log(error, "Error while Fetching transactions");
-    res.status(503).send();
+    res.status(503).json({
+      error,
+      message:error.message
+    });
   }
 };
 
