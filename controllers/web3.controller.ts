@@ -931,8 +931,8 @@ const unstakeNapaTokens = async (req, res) => {
     let unStakeResponse;
     const decimals = 10 ** 18;
 
-    let wallet = new ethers.Wallet((req.query.private_key).toString());
-    let walletSigner = wallet.connect(global.ethersProvider);
+    const wallet = new ethers.Wallet((req.query.private_key).toString());
+    const walletSigner = wallet.connect(global.ethersProvider);
 
     const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
 
@@ -945,7 +945,7 @@ const unstakeNapaTokens = async (req, res) => {
     }
 
     const date = new Date(Number((_userDeposit[3].toString()) * 1000));
-    var currentUnix = Math.round(+new Date() / 1000);
+    const currentUnix = Math.round(+new Date() / 1000);
 
     if (Number(_userDeposit[1].toString()) <= 0) {
       console.log("you don't have any tokens staked for this plan yet");
