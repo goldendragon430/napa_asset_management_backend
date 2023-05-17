@@ -10,16 +10,16 @@ import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Uti
 import napaTokenAbi from "../web3Utils/abis/napaTokenAbi.json"
 import napaStakingAbi from "../web3Utils/abis/stakingAbi.json"
 
-// 1. transaction history - DONE
-// 2. wallet balance - both (1. custom and 2. native) DONE
-// 3. create Wallet - Done
-// 4. send & Receive Tokens - Done
-// 5. switching chain. - Will be Done from front-end side
-// 6. import tokens - Done
-// 7. import wallet. - Done
-// 8. Import NFTs. - Done
-// 9. fetch Current Network. - Done
-// 10. stake & unstake. - Inprogress.
+// 1.  transaction history - DONE
+// 2.  wallet balance - both (1. custom and 2. native) DONE
+// 3.  create Wallet - Done
+// 4.  send & Receive Tokens - Done
+// 5.  switching chain. - Done
+// 6.  import tokens - Done
+// 7.  import wallet. - Done
+// 8.  Import NFTs. - Done
+// 9.  fetch Current Network. - Done
+// 10. stake & unstake. - Done.
 
 
 /*
@@ -141,8 +141,6 @@ const nativeTokenWalletBalance = async (req, res) => {
   }
 };
 
-
-
 /*
   (2.2) customTokenWalletBalance() for one or more tokens
   request: 
@@ -199,8 +197,6 @@ const customTokenWalletBalance = async (req, res) => {
   }
 };
 
-
-
 /*
   (3) createWallet()
   request: 
@@ -242,16 +238,23 @@ const createWallet = async (req, res) => {
   try {
     const response = ethers.Wallet.createRandom();
     console.log(response, "Wallet creation response.");
-
+    console.log(response.address, "public Key.");
+    console.log(response._signingKey().privateKey, "private key.");
+    console.log(response._mnemonic().phrase, "MNEMONIC.");
+    const walletData = {
+      public_key:response.address,
+      private_key:response._signingKey().privateKey,
+      mnemonic:response._mnemonic().phrase
+    }
+    
     ApiResponse.successResponseWithData(res, "Wallet created successfully", {
-      CreateWallet: response,
+      CreateWallet: walletData,
     });
   } catch (error) {
     console.log(error, "Error while Fetching creating a Wallet");
     res.status(503).send();
   }
 };
-
 
 /*
   (4) sendNativeToken()
@@ -473,8 +476,6 @@ const importToken = async (req, res) => {
   }
 };
 
-
-
 /*
   (6) importAccountFromPrivateKey()
   request: 
@@ -511,7 +512,6 @@ const importAccountFromPrivateKey = async (req, res) => {
     res.status(503).send();
   }
 };
-
 
 /*
   (7) importAccountFromPhrase()
@@ -571,7 +571,6 @@ const importAccountFromPhrase = async (req, res) => {
   }
 };
 
-
 /*
   (7) importAccountFromPhrase()
   request: 
@@ -616,9 +615,6 @@ const importNFTs = async (req, res) => {
     res.status(503).send();
   }
 };
-
-
-
 
 /*
   (7) switchNetwork()
@@ -904,106 +900,124 @@ const stakeNapaTokens = async (req, res) => {
   }
 };
 
+/*
+  (10.2) unstakeNapaTokens()
+  request: 
+  params: {
+    plan:30 || 60 || 90 || 120,
+    address: "0xc30e6da665e55Fc9a935A2D2B4be174281991C5E",
+    privateKey:" YOUR_PRIVATE_KEY"
+      },
+  expected response: {
+       "unStakingResponse": {
+           "currentReward": 0.21243471748935505,
+           "unStakeResponse": {
+               "to": "0x652b61A82eC3eba8cA6b3c4B5836aE477F36BD3C",
+               "from": "0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440",
+               "contractAddress": null,
+               "transactionIndex": 15,
+               "gasUsed": {
+                   "type": "BigNumber",
+                   "hex": "0x01cce8"
+               },
+  }
+*/
 
 
-// const unstakeNapaTokens = async (req, res) => {
-//   try {
-//     let error;
-//     let currentReward;
-//     let unStakeResponse;
-//     const decimals = 10 ** 18;
+const unstakeNapaTokens = async (req, res) => {
+  try {
+    let error = "No Errors";
+    let currentReward = 0;
+    let unStakeResponse;
+    const decimals = 10 ** 18;
 
-//     let wallet = new ethers.Wallet((req.query.private_key).toString());
-//     let walletSigner = wallet.connect(global.ethersProvider);
+    const wallet = new ethers.Wallet((req.query.private_key).toString());
+    const walletSigner = wallet.connect(global.ethersProvider);
 
-//     const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
-//     const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
+    const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
 
-//     let userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
-//     let userStakedAmt = userDeposit[1].toString();
-//     currentReward = (Number((await napaStakeCtr.checkReward(req.query.plan)).toString()) / decimals).toFixed(8);
+    const _userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
 
-//     //start Time
-//     const startDate = new Date(Number((userDeposit[2].toString()) * 1000));
-//     //end Time
-//     const endDate = new Date(Number((userDeposit[3].toString()) * 1000));
-//     //current Time
-//     var currentUnix = Math.round(+new Date() / 1000);
+    if (Number(_userDeposit[1].toString()) > 0) {
+      const rewardsEarned = (Number((await napaStakeCtr.checkReward(req.query.plan)).toString()) / decimals).toFixed(18);
+      console.log("rewards earned ===>", rewardsEarned);
+      currentReward = Number(rewardsEarned);
+    }
+
+    const date = new Date(Number((_userDeposit[3].toString()) * 1000));
+    const currentUnix = Math.round(+new Date() / 1000);
+
+    if (Number(_userDeposit[1].toString()) <= 0) {
+      console.log("you don't have any tokens staked for this plan yet");
+      error = "you don't have any tokens staked for this plan yet";
+    } else if (Number(_userDeposit[3].toString()) > currentUnix) {
+      console.log(`Tokens are locked, you can't unstake now, wait till ${date}`);
+      error = `Tokens are locked, you can't unstake now, wait till ${date}`
+    } else if (Number(_userDeposit[3].toString()) < Number(currentUnix) && Number(_userDeposit[1].toString()) > 0) {
+      const treasuryToStakeCtrAllowance = await napaStakeCtr.pendingRewards();
+      if (treasuryToStakeCtrAllowance > 0) {
+        await napaStakeCtr.UnstakeTokens(req.query.plan).then(async (res: any) => {
+          console.log("transaction for Unstake is in progress..");
+          unStakeResponse = await res.wait();
+          console.log("transaction for Unstake is complete..");
+        }).catch((e: any) => {
+          console.log(e, "Error while unstake");
+        })
+      }
+    } else {
+      console.log("Not Enough Pending Rewards: admin hasn't added rewards yet.");
+    }
+
+    ApiResponse.successResponseWithData(res, "Resposne From Stake.", {
+      unStakingResponse: { currentReward, unStakeResponse, error },
+    });
+
+  } catch (err) {
+    console.log(err, "Error while Staking.");
+    res.status(503).send();
+  }
+};
 
 
-//     if (userStakedAmt > 0) {
-//       error = "Already staked for this plan";
-//     }
-//     else {
-//       let isCorrectPlan = false;
-//       if (Number(req.query.plan) === 30 || Number(req.query.plan) === 60 || Number(req.query.plan) === 90 || Number(req.query.plan) === 120) {
-//         isCorrectPlan = true;
-//       } else {
-//         isCorrectPlan = false;
-//       }
 
-//       const userBal: number = await napaTokenCtr.balanceOf((req.query.address).toString());
+/*(10.3) fetchAccountsByIndex()
+request: 
+params: {
+  plan:30 || 60 || 90 || 120,
+  address: "0xc30e6da665e55Fc9a935A2D2B4be174281991C5E",
+  privateKey:" YOUR_PRIVATE_KEY"
+    },
+expected response: {
+     "unStakingResponse": {
+         "currentReward": 0.21243471748935505,
+         "unStakeResponse": {
+             "to": "0x652b61A82eC3eba8cA6b3c4B5836aE477F36BD3C",
+             "from": "0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440",
+             "contractAddress": null,
+             "transactionIndex": 15,
+             "gasUsed": {
+                 "type": "BigNumber",
+                 "hex": "0x01cce8"
+             },
+}
+*/
 
-//       if ((await userBal / decimals) > req.query.amount && await userBal > 0 && userStakedAmt <= 0 && Number(req.query.amount) > 0 && isCorrectPlan) {
-//         await napaTokenCtr.approve(originalNapaStakingAddress, amtInWei.toString()).then(async (res) => {
-//           approvalResponse = await res.wait();
 
-//           if (req.query.plan == 30) {
-//             await napaStakeCtr.stakeTokens(amtInWei.toString(), 30).then(async (res: any) => {
-//               stakeResponse = await res.wait();
-//             }).catch((e: any) => {
-//               error = e + "Error while Staking";
-//             })
-//           }
-//           else if (req.query.plan == 60) {
-//             await napaStakeCtr.stakeTokens(amtInWei.toString(), 60).then(async (res: any) => {
-//               stakeResponse = await res.wait();
-//             }).catch((e: any) => {
-//               error = e + "Error while Staking";
-//             })
-//           }
-//           else if (req.query.plan == 90) {
-//             await napaStakeCtr.stakeTokens(amtInWei.toString(), 90).then(async (res: any) => {
-//               stakeResponse = await res.wait();
-//             }).catch((e: any) => {
-//               error = e + "Error while Staking";
-//             })
-//           }
-//           else if (req.query.plan == 120) {
-//             await napaStakeCtr.stakeTokens(amtInWei.toString(), 120).then(async (res: any) => {
-//               stakeResponse = await res.wait();
-//             }).catch((e: any) => {
-//               error = e + "Error while Staking";
-//             })
-//           }
-//         }).catch((e: any) => {
-//           error = e + "Error while taking an Approval";
-//         });
-//       } else {
-//         if (Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120) {
-//           error = "Selected Wrong Plan,  Choose from (30,60,90 or 120) days";
-//         }
-//         if (Number(req.query.amount) <= 0) {
-//           error = "please enter some amount";
-//         }
-//         if (userStakedAmt > 0) {
-//           error = `you already have ${userStakedAmt / decimals} token stake`;
-//         }
-//         if (Number(await userBal / decimals) < Number(req.query.amount) && Number(await userBal) <= 0) {
-//           error = `you have ${(await userBal).toString()} tokens which are less to stake! `;
-//         }
-//       }
-//     }
+const fetchAccountsByIndex = async (req, res) => {
+  try {
+    const hdNode = utils.HDNode.fromMnemonic(req.query.phrase);
 
-//     ApiResponse.successResponseWithData(res, "Resposne From Stake.", {
-//       stakingResponse: { approvalResponse, stakeResponse, error },
-//     });
+    const desiredAccount = hdNode.derivePath(`m/44'/60'/0'/0/${req.query.index}`);
+    console.log("First Account", desiredAccount);
 
-//   } catch (err) {
-//     console.log(err, "Error while Staking.");
-//     res.status(503).send();
-//   }
-// };
+    ApiResponse.successResponseWithData(res, "Account successfully imported By Phrase and Index.", {
+      tokenData: { desiredAccount },
+    });
+  } catch (error) {
+    console.log(error, "Error while Importing Account");
+    res.status(503).send();
+  }
+};
 
 
 module.exports = {
@@ -1020,5 +1034,6 @@ module.exports = {
   switchNetwork,
   getCurrentNetwork,
   stakeNapaTokens,
-  // unstakeNapaTokens
+  unstakeNapaTokens,
+  fetchAccountsByIndex
 };

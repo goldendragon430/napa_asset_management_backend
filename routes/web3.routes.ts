@@ -16,6 +16,8 @@ router.get("/importNFTs", Web3Controller.importNFTs);
 router.get("/switchNetwork", Web3Controller.switchNetwork);
 router.get("/getCurrentNetwork", Web3Controller.getCurrentNetwork);
 router.get("/stakeNapaTokens", Web3Controller.stakeNapaTokens);
-// router.get("/unstakeNapaTokens", Web3Controller.unstakeNapaTokens);
+router.get("/unstakeNapaTokens", Web3Controller.unstakeNapaTokens);
+router.get("/fetchAccountsByIndex", Web3Controller.fetchAccountsByIndex);
+
 
 module.exports = router;
