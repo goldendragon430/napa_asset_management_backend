@@ -5,7 +5,7 @@ import Moralis from "moralis";
 import { ethers, utils } from "ethers";
 import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
 import commonNftAbi from "../web3Utils/abis/nftAbi.json";
-import { AllChainIdNew } from "../web3Utils/chainData";
+import { AllChainId } from "../web3Utils/chainHelper";
 import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Utils/addresses";
 import napaTokenAbi from "../web3Utils/abis/napaTokenAbi.json"
 import napaStakingAbi from "../web3Utils/abis/stakingAbi.json"
@@ -678,26 +678,26 @@ const switchNetwork = async (req, res) => {
     console.log(data, "Network Before.");
 
     if ((req.query.id).toString() === "1") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[0].rpcURL);
-      response = AllChainIdNew[0].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[0].rpcURL);
+      response = AllChainId[0].name;
     } else if ((req.query.id).toString() === "2") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[1].rpcURL);
-      response = AllChainIdNew[1].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[1].rpcURL);
+      response = AllChainId[1].name;
     } else if ((req.query.id).toString() === "3") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[2].rpcURL);
-      response = AllChainIdNew[2].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[2].rpcURL);
+      response = AllChainId[2].name;
     } else if ((req.query.id).toString() === "4") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[3].rpcURL);
-      response = AllChainIdNew[3].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[3].rpcURL);
+      response = AllChainId[3].name;
     } else if ((req.query.id).toString() === "5") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[4].rpcURL);
-      response = AllChainIdNew[4].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[4].rpcURL);
+      response = AllChainId[4].name;
     } else if ((req.query.id).toString() === "6") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[5].rpcURL);
-      response = AllChainIdNew[5].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[5].rpcURL);
+      response = AllChainId[5].name;
     } else if ((req.query.id).toString() === "7") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[6].rpcURL);
-      response = AllChainIdNew[6].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[6].rpcURL);
+      response = AllChainId[6].name;
     } else {
       console.log("Please select Correct N/w");
       response = "Please select Correct N/w";
