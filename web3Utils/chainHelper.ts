@@ -77,7 +77,7 @@ export const AllChainId = [
 ]
 
 
-export const setProvider = async (chainId: any, wallet: any) => {
+export const setProvider = async (chainId: any) => {
     let provider: any;
     try {
         if (Number(chainId) == 0) {
