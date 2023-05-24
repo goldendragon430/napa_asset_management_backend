@@ -20,27 +20,30 @@ import napaStakingAbi from "../web3Utils/abis/stakingAbi.json"
 // 8.  Import NFTs. - Done
 // 9.  fetch Current Network. - Done
 // 10. stake & unstake. - Done.
+// 11. fetch All NFTs for the Wallet
+// 12. fetch any specific NFTs for the Wallet.
 
 
 /*
   (1) transactionHistory()  COMPLETE
   request: 
   params {
-        "chainId":"0x5",
-        "walletAddress":"0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440"
+        "chainId":"2",
+        "wallet_address":"0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440"
   }
 */
 
 const transactionHistory = async (req, res) => {
   try {
+    const chainData = await getChain(req.query.chainId);
+    const hex = String(chainData?.hex);
     const response = await Moralis.EvmApi.transaction.getWalletTransactions({
-      chain: req.query.chainId.toString(),
-      address: req.query.walletAddress.toString(),
+      chain: hex.toString(),
+      address: req.query.wallet_address.toString(),
     });
-
     console.log(
       response,
-      `All Transactions of ${req.query.walletAddress.toString()}.`
+      `All Transactions of ${req.query.wallet_address.toString()}.`
     );
 
     ApiResponse.successResponseWithData(
@@ -57,32 +60,30 @@ const transactionHistory = async (req, res) => {
   }
 };
 
-
 /*
   (2.1) nativeTokenWalletBalance()  COMPLETE
   request: 
   params: {
-      "chainId":11155111,
-      "walletAddress":0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440
+      "chainId":2,
+      "wallet_address":0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440
       }
 */
 
 const nativeTokenWalletBalance = async (req, res) => {
   try {
-    // Convert a number to a hexadecimal string with:
-    const hexString = (Number(req.query.chainId)).toString(16);
-    const convertedHEX = "0x" + hexString
+    const chainData = await getChain(req.query.chainId);
+    const hex = String(chainData?.hex);
 
     const response = await Moralis.EvmApi.balance.getNativeBalance({
-      "chain": convertedHEX,
-      "address": (req.query.walletAddress).toString()
+      "chain": hex.toString(),
+      "address": (req.query.wallet_address).toString()
     });
     console.log(
       response,
       `Balance of ${response}`
     );
 
-    ApiResponse.successResponseWithData(res, "Balance fetched successfully", {
+    ApiResponse.successResponseWithData(res, "Native Balance fetched successfully", {
       NativeTokenWalletBalance: response,
     });
   } catch (error) {
@@ -103,26 +104,20 @@ const nativeTokenWalletBalance = async (req, res) => {
 
 const customTokenWalletBalance = async (req, res) => {
   try {
-    // Convert a number to a hexadecimal string with:
-    const hexString = (Number(req.query.chainId)).toString(16);
-    const convertedHEX = "0x" + hexString;
+    const chainData = await getChain(req.query.chainId);
+    const hex = String(chainData?.hex);
 
     // fetching balance for all tokens. 
     let tokens: Array<string> = []
 
     tokens = req.query.tokenAddresses.split(',');
-    tokens.map(String)
-    console.log(tokens, convertedHEX, "converted HEX and token addresses");
 
     const response = await Moralis.EvmApi.token.getWalletTokenBalances({
-      "chain": convertedHEX,
+      "chain": hex,
       "tokenAddresses": tokens,
-      "address": (req.query.walletAddress).toString()
+      "address": (req.query.wallet_address).toString()
     });
 
-    console.log(
-      response
-    );
 
     ApiResponse.successResponseWithData(
       res,
@@ -141,7 +136,7 @@ const customTokenWalletBalance = async (req, res) => {
   params: {
       "chainId":5,
       "tokenAddresses":0x816A6295C4be3c76a4fd5102c9f9A7D407e43981
-      "walletAddress":0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440
+      "wallet_address":0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440
       }
 */
 
@@ -172,9 +167,9 @@ const createWallet = async (req, res) => {
   request: 
   params: {
       "private_key":YOUR_WALLET_PRIVATE_KEY,
-      "send_token_amount":0.001,
-      "send_account":0x13c8c779899b5EA05236923203A2DbAbBC485AC0  (FROM_ACCOUNT),
-      "to_address":0xFee897E3a3F12a1550E73b8437C20301325Cc98F  (TO_ACCOUNT)
+      "amount":0.001,
+      "sender_address":0x13c8c779899b5EA05236923203A2DbAbBC485AC0  (FROM_ACCOUNT),
+      "receiver_address":0xFee897E3a3F12a1550E73b8437C20301325Cc98F  (TO_ACCOUNT)
       }
 */
 
@@ -191,11 +186,11 @@ const sendNativeToken = async (req, res) => {
         const gas_price = ethers.utils.hexlify((currentGasPrice));
         const gas_limit: any = 100000;
         const tx = {
-          from: req.query.send_account,
-          to: req.query.to_address,
-          value: ethers.utils.parseEther(req.query.send_token_amount),
+          from: req.query.sender_address,
+          to: req.query.receiver_address,
+          value: ethers.utils.parseEther(req.query.amount),
           nonce: _provider.getTransactionCount(
-            req.query.send_account,
+            req.query.sender_address,
             "latest"
           ),
           gasLimit: ethers.utils.hexlify(gas_limit), // 100000
@@ -227,10 +222,11 @@ const sendNativeToken = async (req, res) => {
   (4) sendCustomToken() COMPLETE
   request: 
   params: {
-      "private_key":YOUR_WALLET_PRIVATE_KEY,
-      "send_token_amount":0.001,
-      "send_account":0x13c8c779899b5EA05236923203A2DbAbBC485AC0  (FROM_ACCOUNT),
-      "to_address":0xFee897E3a3F12a1550E73b8437C20301325Cc98F  (TO_ACCOUNT)
+      "private_key":YOUR_WALLET_PRIVATE_KEY (Sender's Private Key),
+      "amount":0.001,
+      "receiver_address":0x13c8c779899b5EA05236923203A2DbAbBC485AC0  (FROM_ACCOUNT),
+      "contract_address":0xFee897E3a3F12a1550E73b8437C20301325Cc98F  (TO_ACCOUNT)
+      "chainId":2,
       }
 */
 
@@ -241,19 +237,17 @@ const sendCustomToken = async (req, res) => {
     let walletSigner = wallet.connect(_provider);
 
     try {
-      // general token send
       const contract = new ethers.Contract(
         (req.query.contract_address).toString(),
         commonTokenAbi.abi,
         walletSigner
       )
 
-      // How many tokens?
-      const numberOfTokens = ethers.utils.parseUnits(req.query.send_token_amount, 18)
+      const numberOfTokens = ethers.utils.parseUnits(req.query.amount, 18)
       console.log(`numberOfTokens: ${numberOfTokens}`)
 
       // Send tokens
-      contract.transfer((req.query.to_address).toString(), (numberOfTokens).toString()).then((transferResult: any) => {
+      contract.transfer((req.query.receiver_address).toString(), (numberOfTokens).toString()).then((transferResult: any) => {
         console.log(transferResult)
 
         ApiResponse.successResponseWithData(
@@ -276,25 +270,12 @@ const sendCustomToken = async (req, res) => {
 
 /*
   (5) importToken() COMPLETE
+  NOTE: imports multiple tokens
   request: 
   params: {
-      "chainId":11155111,
-      "walletAddress":0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440
-      },
-  expected response: {
-    {
-        "code": 200,
-        "responseTimeStamp": "17-04-2023 04:56:37:5637",
-        "message": "Token Imported successfully",
-        "data": {
-            "tokenData": {
-                "decimals": 18,
-                "balance": "400000000000000000000",
-                "symbol": "NAPA",
-                "name": "NAPA Society"
-            }
-        }
-    }
+      "chainId":2,
+      "contracts":0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440,0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440
+      }
 }
 */
 
@@ -324,19 +305,7 @@ const importTokens = async (req, res) => {
   request: 
   params: {
       "privateKey":YOUR_PRIVATE_KEY
-      },
-  expected response: {
-    {
-    "code": 200,
-    "responseTimeStamp": "17-04-2023 05:08:42:842",
-    "message": "Wallet successfully imported from Privatekey ",
-    "data": {
-        "tokenData": {
-            "response": "0xFee897E3a3F12a1550E73b8437C20301325Cc98F"
-        }
-    }
-  }
-}
+      }
 */
 
 const importAccountFromPrivateKey = async (req, res) => {
@@ -357,12 +326,11 @@ const importAccountFromPrivateKey = async (req, res) => {
 };
 
 /*
-  (7) importAccountFromPhrase()
+  (7) importAccountFromPhrase()  COMPLETE
   request: 
   params: {
       "phrase":YOUR_SECRET_PHRASE
       },
-}
 */
 
 const importAccountFromPhrase = async (req, res) => {
@@ -392,30 +360,28 @@ const importAccountFromPhrase = async (req, res) => {
   (7) importAccountFromPhrase() COMPLETE
   request: 
   params: {
-      "contract_address":0x7bBBa86B912C40a92eca40369B5813cf87153251,
-      "private_key":YOUR_PRIVATE_KEY,
-      "tknId":68
+      "contract":0x7bBBa86B912C40a92eca40369B5813cf87153251,
+      "chainId":2,
+      "tokenId":68
       }
-}
 */
 
 const importNFTs = async (req, res) => {
   try {
-    const wallet = new ethers.Wallet((req.query.private_key).toString());
-    const _provider = await setProvider(req.query.chainId, wallet);
-    let walletSigner = wallet.connect(_provider);
+    const chainData = await getChain(req.query.chainId);
+    console.log(String(chainData?.hex))
+    const response = await Moralis.EvmApi.nft.getNFTTokenIdOwners({
+      "chain": String(chainData.hex),
+      "format": "decimal",
+      "mediaItems": false,
+      "address": (req.query.contract).toString(),
+      "tokenId": (req.query.tokenId).toString()
+    });
 
-    const contract = new ethers.Contract(
-      req.query.contract_address,
-      commonNftAbi.abi,
-      walletSigner
-    )
-
-    const nftData = await contract.tokenURI(req.query.tknId);
-    console.log(await nftData, "NFT data....!");
+    console.log(await response, "NFT data....!");
 
     ApiResponse.successResponseWithData(res, "NFT imported Successfully ", {
-      tokenData: { nftData },
+      tokenData: { response },
     });
   } catch (error) {
     console.log(error, "Error while Importing Wallet");
@@ -427,6 +393,7 @@ const importNFTs = async (req, res) => {
   (10.1) stakeTokens() COMPLETE
   request: 
   params: {
+    chainId: 2,
     plan:30 || 60 || 90 || 120,
     address: "0xaBcDsaskjis786sadgsa7d65asdsaasas",
     amount:10,
@@ -527,9 +494,10 @@ const stakeNapaTokens = async (req, res) => {
 };
 
 /*
-  (10.2) unstakeNapaTokens()
+  (10.2) unstakeNapaTokens() COMPLETE
   request: 
   params: {
+    chainId:2,
     plan:30 || 60 || 90 || 120,
     address: "0xc30e6da665e55Fc9a935A2D2B4be174281991C5E",
     privateKey:" YOUR_PRIVATE_KEY"
@@ -597,14 +565,10 @@ const unstakeNapaTokens = async (req, res) => {
 /*(10.3) fetchAccountsByIndex() COMPLETE
 request: 
 params: {
-  plan:30 || 60 || 90 || 120,
-  address: "0xc30e6da665e55Fc9a935A2D2B4be174281991C5E",
-  privateKey:" YOUR_PRIVATE_KEY"
+      "phrase":ribbon major review hair prevent usage purchase wrap acid oval admit stuff (YOUR PHRASE),
+      index:2
     }
-}
 */
-
-
 const fetchAccountsByIndex = async (req, res) => {
   try {
     const hdNode = utils.HDNode.fromMnemonic(req.query.phrase);
@@ -622,6 +586,70 @@ const fetchAccountsByIndex = async (req, res) => {
 };
 
 
+
+/* 11. fetch All NFTs for the Wallet COMPLETE
+request: 
+params: {
+      "chainId":2,
+      address:0x1cb0a69aA6201230aAc01528044537d0F9D718F3
+    }
+*/
+const getAllNFTsOfUser = async (req, res) => {
+  try {
+
+    const chainData = await getChain(req.query.chainId);
+
+    const response = await Moralis.EvmApi.nft.getWalletNFTs({
+      "chain": (chainData.hex).toString(),
+      "format": "decimal",
+      "mediaItems": true,
+      "address": (req.query.address).toString()
+    });
+
+    ApiResponse.successResponseWithData(res, "All NFTs rerlated to this account are fetched.", {
+      tokenData: { response },
+    });
+  } catch (error) {
+    console.log(error, "Error while Importing Account");
+    res.status(503).send();
+  }
+};
+
+
+/* 12. fetch any specific NFTs for the Wallet.  COMPLETE
+request: 
+params: {
+      "chainId":2,
+      "tokenAddresses":0x1cb0a69aA6201230aAc01528044537d0F9D718F3
+    }
+*/
+
+const getSpecificNFTsOfUser = async (req, res) => {
+  try {
+    const chainData = await getChain(req.query.chainId);
+    let tokens: Array<string> = []
+    tokens = req.query.tokenAddresses.split(',');
+
+    const response = await Moralis.EvmApi.nft.getWalletNFTs({
+      "chain": (chainData.hex).toString(),
+      "format": "decimal",
+      "tokenAddresses": tokens,
+      "mediaItems": true,
+      "address": "0x1cb0a69aA6201230aAc01528044537d0F9D718F3"
+    });
+
+
+    ApiResponse.successResponseWithData(res, "All NFTs related to this account are fetched.", {
+      tokenData: { response },
+    });
+  } catch (error) {
+    console.log(error, "Error while Importing Account");
+    res.status(503).send();
+  }
+};
+
+
+
 module.exports = {
   transactionHistory,
   nativeTokenWalletBalance,
@@ -635,5 +663,7 @@ module.exports = {
   importNFTs,
   stakeNapaTokens,
   unstakeNapaTokens,
-  fetchAccountsByIndex
+  fetchAccountsByIndex,
+  getAllNFTsOfUser,
+  getSpecificNFTsOfUser
 };
