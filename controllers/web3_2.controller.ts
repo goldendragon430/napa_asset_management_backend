@@ -4,10 +4,7 @@ import ApiResponse from "../utils/api-response";
 import Moralis from "moralis";
 import { ethers, utils } from "ethers";
 import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
-// import commonNftAbi from "../web3Utils/abis/nftAbi.json";
-import { 
-  // AllChainId, 
-  getChain, setProvider } from "../web3Utils/chainHelper";
+import { getChain, setProvider } from "../web3Utils/chainHelper";
 import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Utils/addresses";
 import napaTokenAbi from "../web3Utils/abis/napaTokenAbi.json"
 import napaStakingAbi from "../web3Utils/abis/stakingAbi.json"
@@ -180,7 +177,7 @@ const createWallet = async (req, res) => {
 const sendNativeToken = async (req, res) => {
   try {
     const wallet = new ethers.Wallet((req.query.private_key).toString());
-    const _provider = await setProvider(req.query.chainId, wallet);
+    const _provider = await setProvider(req.query.chainId);
     const walletSigner = wallet.connect(_provider);
 
     if (_provider) {
@@ -235,7 +232,7 @@ const sendNativeToken = async (req, res) => {
 const sendCustomToken = async (req, res) => {
   try {
     const wallet = new ethers.Wallet((req.query.private_key).toString());
-    const _provider = await setProvider(req.query.chainId, wallet);
+    const _provider = await setProvider(req.query.chainId);
     const walletSigner = wallet.connect(_provider);
 
     try {
@@ -283,7 +280,6 @@ const sendCustomToken = async (req, res) => {
 
 const importTokens = async (req, res) => {
   try {
-    // let response;
     const chainData = await getChain(req.query.chainId);
     const sortedAddresses = req.query.contracts.split(",");
 
@@ -412,7 +408,7 @@ const stakeNapaTokens = async (req, res) => {
     const amtInWei = req.query.amount * decimals;
 
     const wallet = new ethers.Wallet((req.query.private_key).toString());
-    const _provider = await setProvider(req.query.chainId, wallet);
+    const _provider = await setProvider(req.query.chainId);
     const walletSigner = wallet.connect(_provider);
 
     const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
@@ -516,7 +512,7 @@ const unstakeNapaTokens = async (req, res) => {
     const decimals = 10 ** 18;
 
     const wallet = new ethers.Wallet((req.query.private_key).toString());
-    const _provider = await setProvider(req.query.chainId, wallet);
+    const _provider = await setProvider(req.query.chainId);
     const walletSigner = wallet.connect(_provider);
 
     const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
