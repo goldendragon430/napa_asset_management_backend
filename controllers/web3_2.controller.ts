@@ -35,9 +35,10 @@ import { getPhraseByProfileId, getPrivateKeyByProfileId } from "../utils/napa-ac
 
 const transactionHistory = async (req, res) => {
   try {
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    const wallet = new ethers.Wallet(pk);
-    const publicKey = wallet.address;
+    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    // const wallet = new ethers.Wallet(pk);
+    // const publicKey = wallet.address;
+    const publicKey = req.query.wallet_address
 
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
@@ -107,9 +108,10 @@ const nativeTokenWalletBalance = async (req, res) => {
 
 const customTokenWalletBalance = async (req, res) => {
   try {
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    const wallet = new ethers.Wallet(pk);
-    const publicKey = wallet.address;
+    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    // const wallet = new ethers.Wallet(pk);
+    // const publicKey = wallet.address;
+    const publicKey = req.query.wallet_address
 
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
@@ -611,9 +613,10 @@ params: {
 */
 const getAllNFTsOfUser = async (req, res) => {
   try {
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    const wallet = new ethers.Wallet(pk);
-    const publicKey = wallet.address;
+    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    // const wallet = new ethers.Wallet(pk);
+    // const publicKey = wallet.address;
+    const publicKey = req.query.address
 
     const chainData = await getChain(req.query.chainId);
     const response = await Moralis.EvmApi.nft.getWalletNFTs({
