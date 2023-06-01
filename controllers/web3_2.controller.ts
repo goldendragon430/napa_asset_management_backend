@@ -343,7 +343,7 @@ const importAccountFromPrivateKey = async (req, res) => {
 
 const importAccountFromPhrase = async (req, res) => {
   try {
-    const pk = await getPhraseByProfileId('9fd87b56-5394-4724-a140-d48c82ea27a2')
+    const pk = await getPhraseByProfileId(req.query.profileId)
     const hdNode = utils.HDNode.fromMnemonic(pk);
 
     const firstAccount = hdNode.derivePath(`m/44'/60'/0'/0/0`); // This returns a new HDNode
