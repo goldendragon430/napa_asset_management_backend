@@ -18,6 +18,10 @@ router.get("/unstakeNapaTokens", Web3Controller.unstakeNapaTokens);
 router.get("/fetchAccountsByIndex", Web3Controller.fetchAccountsByIndex);
 router.get("/getAllNFTsOfUser", Web3Controller.getAllNFTsOfUser);
 router.get("/getSpecificNFTsOfUser", Web3Controller.getSpecificNFTsOfUser);
+router.post("/signTransaction", Web3Controller.signTransaction);
+router.get("/fetchTokenTransfers", Web3Controller.fetchTokenTransfers);
+router.get("/fetchNFTTransfers", Web3Controller.fetchNFTTransfers);
+
 
 // we don't need bellow endpoints from now.   
 // router.get("/switchNetwork", Web3Controller.switchNetwork);

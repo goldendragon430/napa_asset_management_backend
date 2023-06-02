@@ -22,7 +22,10 @@ import { getPhraseByProfileId, getPrivateKeyByProfileId } from "../utils/napa-ac
 // 10. stake & unstake. - Done.
 // 11. fetch All NFTs for the Wallet
 // 12. fetch any specific NFTs for the Wallet.
-
+// 13. fetchSigner - fetch a signer based on account to sign a transaction from NAPA wallet.
+// 14. fetchTokenTransactions - fetch all ERC20 transactions related to WALLET
+// 15. fetchNFTTransactions - fetch all NFT transactions related to WALLET
+// 16. signTransaction - call any contract function by NAPA wallet(without exposing the private key).
 
 /*
   (1) transactionHistory()  COMPLETE
@@ -35,10 +38,9 @@ import { getPhraseByProfileId, getPrivateKeyByProfileId } from "../utils/napa-ac
 
 const transactionHistory = async (req, res) => {
   try {
-    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    // const wallet = new ethers.Wallet(pk);
-    // const publicKey = wallet.address;
-    const publicKey = req.query.wallet_address
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const wallet = new ethers.Wallet(pk);
+    const publicKey = wallet.address;
 
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
@@ -108,10 +110,9 @@ const nativeTokenWalletBalance = async (req, res) => {
 
 const customTokenWalletBalance = async (req, res) => {
   try {
-    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    // const wallet = new ethers.Wallet(pk);
-    // const publicKey = wallet.address;
-    const publicKey = req.query.wallet_address
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const wallet = new ethers.Wallet(pk);
+    const publicKey = wallet.address;
 
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
@@ -345,7 +346,7 @@ const importAccountFromPrivateKey = async (req, res) => {
 
 const importAccountFromPhrase = async (req, res) => {
   try {
-    const pk = await getPhraseByProfileId(req.query.profileId)
+    const pk = await getPhraseByProfileId('9fd87b56-5394-4724-a140-d48c82ea27a2')
     const hdNode = utils.HDNode.fromMnemonic(pk);
 
     const firstAccount = hdNode.derivePath(`m/44'/60'/0'/0/0`); // This returns a new HDNode
@@ -613,10 +614,9 @@ params: {
 */
 const getAllNFTsOfUser = async (req, res) => {
   try {
-    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    // const wallet = new ethers.Wallet(pk);
-    // const publicKey = wallet.address;
-    const publicKey = req.query.address
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const wallet = new ethers.Wallet(pk);
+    const publicKey = wallet.address;
 
     const chainData = await getChain(req.query.chainId);
     const response = await Moralis.EvmApi.nft.getWalletNFTs({
@@ -672,7 +672,116 @@ const getSpecificNFTsOfUser = async (req, res) => {
   }
 };
 
+/*
+  (13) fetchTokenTransfers()  COMPLETE
+  request: 
+  params {
+        "chainId":"2",
+        "profileId":""
+  }
+*/
 
+const fetchTokenTransfers = async (req, res) => {
+  try {
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const wallet = new ethers.Wallet(pk);
+    const publicKey = wallet.address;
+
+    const chainData = await getChain(req.query.chainId);
+    const hex = String(chainData?.hex);
+
+    const response = await Moralis.EvmApi.token.getWalletTokenTransfers({
+      chain: hex.toString(),
+      address: publicKey.toString(),
+    });
+    ApiResponse.successResponseWithData(
+      res,
+      "Transactions for ERC20 Tokens fetched successfully",
+      { TransactionHistory: response }
+    );
+  } catch (error) {
+    console.log(error, "Error while Fetching transactions for ERC20 Tokens");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
+/*
+  (14) fetchNFTTransfers()  COMPLETE
+  request: 
+  params {
+        "chainId":"2",
+        "profileId":""
+  }
+*/
+const fetchNFTTransfers = async (req, res) => {
+  try {
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const wallet = new ethers.Wallet(pk);
+    const publicKey = wallet.address;
+
+    const chainData = await getChain(req.query.chainId);
+    const hex = String(chainData?.hex);
+
+    const response = await Moralis.EvmApi.nft.getWalletNFTTransfers({
+      "chain": hex.toString(),
+      "format": "decimal",
+      "direction": "both",
+      "address": publicKey.toString()
+    });
+
+    ApiResponse.successResponseWithData(
+      res,
+      "Transactions for NFTs fetched successfully",
+      { TransactionHistory: response }
+    );
+  } catch (error) {
+    console.log(error, "Error while Fetching transactions for NFTs");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
+
+
+// params: 
+//1. callData  => (includes all details regardiing the function call) -> will explain later.
+//2. profileId => ("9fd87b56-5394-4724-a140-d48c82ea27a2")
+
+const signTransaction = async (req, res) => {
+  try {
+    //getting signer
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const _provider = await setProvider(2);
+    const wallet = new ethers.Wallet((pk).toString());
+    const signer = wallet.connect(_provider);
+    //
+    const convertedABI = JSON.parse(req.body.params.callData.abi);
+    const convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
+    const functionName = JSON.parse(req.body.params.callData.funcionName);
+    const allParams = JSON.parse(req.body.params.callData.allParams);
+
+    console.log(convertedContractAddress, allParams, functionName, ".......params......");
+
+    const contract = new ethers.Contract(
+      (convertedContractAddress).toString(),
+      convertedABI.abi,
+      signer
+    )
+
+    const transactionResponse = await contract[functionName](...allParams);
+    console.log(await transactionResponse, "transaction confirmation")
+
+    ApiResponse.successResponseWithData(res, "transaction processed!", {
+      transactionSuccess: { transactionResponse },
+    });
+  } catch (error) {
+    console.log(error, "Error while fetching signer");
+    res.status(503).send();
+  }
+};
 
 module.exports = {
   transactionHistory,
@@ -689,5 +798,8 @@ module.exports = {
   unstakeNapaTokens,
   fetchAccountsByIndex,
   getAllNFTsOfUser,
-  getSpecificNFTsOfUser
+  getSpecificNFTsOfUser,
+  fetchTokenTransfers,
+  fetchNFTTransfers,
+  signTransaction
 };
