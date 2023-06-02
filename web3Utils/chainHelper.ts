@@ -82,25 +82,25 @@ export const setProvider = async (chainId: any) => {
     try {
         if (Number(chainId) == 0) {
             provider = new ethers.providers.JsonRpcProvider(AllChainId[0].rpcURL)
-            console.log(provider, "for ETHEREUM MAIN Network");
+            console.log("for ETHEREUM MAIN Network");
         } else if (Number(chainId) == 1) {
             provider = new ethers.providers.JsonRpcProvider(AllChainId[1].rpcURL)
-            console.log(provider, "for GOERLI Network");
+            console.log("for GOERLI Network");
         } else if (Number(chainId) == 2) {
             provider = new ethers.providers.JsonRpcProvider(AllChainId[2].rpcURL)
-            console.log(provider, "for SEPOLIA Network");
+            console.log("for SEPOLIA Network");
         } else if (Number(chainId) == 3) {
             provider = new ethers.providers.JsonRpcProvider(AllChainId[3].rpcURL)
-            console.log(provider, "for BNB TEST Network");
+            console.log("for BNB TEST Network");
         } else if (Number(chainId) == 4) {
             provider = new ethers.providers.JsonRpcProvider(AllChainId[4].rpcURL)
-            console.log(provider, "for BNB MAIN Network");
+            console.log("for BNB MAIN Network");
         } else if (Number(chainId) == 5) {
             provider = new ethers.providers.JsonRpcProvider(AllChainId[5].rpcURL)
-            console.log(provider, "for POLYGON MAIN Network");
+            console.log("for POLYGON MAIN Network");
         } else if (Number(chainId) == 6) {
             provider = new ethers.providers.JsonRpcProvider(AllChainId[6].rpcURL)
-            console.log(provider, "for MUMBAI TEST Network");
+            console.log("for MUMBAI TEST Network");
         } else {
             console.log("Sent Wrong Network ID");
             return 0;
