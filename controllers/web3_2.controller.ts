@@ -32,21 +32,18 @@ import { getPhraseByProfileId, getPrivateKeyByProfileId } from "../utils/napa-ac
   request: 
   params {
         "chainId":"2",
-        "profileId":""
+        "account":""
   }
 */
 
 const transactionHistory = async (req, res) => {
   try {
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    const wallet = new ethers.Wallet(pk);
-    const publicKey = wallet.address;
 
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
     const response = await Moralis.EvmApi.transaction.getWalletTransactions({
       chain: hex.toString(),
-      address: publicKey.toString(),
+      address: (req.query.account).toString(),
     });
     ApiResponse.successResponseWithData(
       res,
@@ -677,22 +674,18 @@ const getSpecificNFTsOfUser = async (req, res) => {
   request: 
   params {
         "chainId":"2",
-        "profileId":""
+        "account":""
   }
 */
 
 const fetchTokenTransfers = async (req, res) => {
   try {
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    const wallet = new ethers.Wallet(pk);
-    const publicKey = wallet.address;
-
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
     const response = await Moralis.EvmApi.token.getWalletTokenTransfers({
       chain: hex.toString(),
-      address: publicKey.toString(),
+      address: (req.query.account).toString(),
     });
     ApiResponse.successResponseWithData(
       res,
@@ -712,15 +705,11 @@ const fetchTokenTransfers = async (req, res) => {
   request: 
   params {
         "chainId":"2",
-        "profileId":""
+        "account":""
   }
 */
 const fetchNFTTransfers = async (req, res) => {
   try {
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    const wallet = new ethers.Wallet(pk);
-    const publicKey = wallet.address;
-
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
@@ -728,7 +717,7 @@ const fetchNFTTransfers = async (req, res) => {
       "chain": hex.toString(),
       "format": "decimal",
       "direction": "both",
-      "address": publicKey.toString()
+      "address": (req.query.account).toString()
     });
 
     ApiResponse.successResponseWithData(
