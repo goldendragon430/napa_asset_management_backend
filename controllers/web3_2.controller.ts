@@ -1,5 +1,4 @@
 // web3 functions will come in this file
-
 import ApiResponse from "../utils/api-response";
 import Moralis from "moralis";
 import { ethers, utils } from "ethers";
@@ -9,6 +8,7 @@ import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Uti
 import napaTokenAbi from "../web3Utils/abis/napaTokenAbi.json"
 import napaStakingAbi from "../web3Utils/abis/stakingAbi.json"
 import { getPhraseByProfileId, getPrivateKeyByProfileId } from "../utils/napa-accounts";
+import { add, remove } from "../utils/streams";
 
 // 1.  transaction history - DONE
 // 2.  wallet balance - both (1. custom and 2. native) DONE
@@ -26,7 +26,7 @@ import { getPhraseByProfileId, getPrivateKeyByProfileId } from "../utils/napa-ac
 // 14. fetchTokenTransactions - fetch all ERC20 transactions related to WALLET
 // 15. fetchNFTTransactions - fetch all NFT transactions related to WALLET
 // 16. signTransaction - call any contract function by NAPA wallet(without exposing the private key).
-
+// 17. fetchMixedTransactions - combination of 1)normal Transaction, 2) ERC20 Transaction and 3)NFT Transactions.
 /*
   (1) transactionHistory()  COMPLETE
   request: 
@@ -734,6 +734,72 @@ const fetchNFTTransfers = async (req, res) => {
   }
 }
 
+/*
+  (15) fetchAllMixedTransactions()  COMPLETE
+  request: 
+  params {
+        "chainId":"2",
+        "account":""
+  }
+*/
+const fetchAllMixedTransactions = async (req, res) => {
+  try {
+    const chainData = await getChain(req.query.chainId);
+    const hex = String(chainData?.hex);
+
+    const allTransactions = [];
+
+    const nftResponse = await Moralis.EvmApi.nft.getWalletNFTTransfers({
+      "chain": hex.toString(),
+      "format": "decimal",
+      "direction": "both",
+      "address": (req.query.account).toString()
+    });
+
+    const tokenResponse = await Moralis.EvmApi.token.getWalletTokenTransfers({
+      chain: hex.toString(),
+      address: (req.query.account).toString(),
+    });
+
+    const nativeResponse = await Moralis.EvmApi.transaction.getWalletTransactions({
+      chain: hex.toString(),
+      address: (req.query.account).toString(),
+    });
+
+    let count = 0;
+    nftResponse.result.map((data)=>{
+      allTransactions.push(data)
+      count+=1      
+    })
+    tokenResponse.result.map((data)=>{
+      allTransactions.push(data)      
+      count+=1
+    })
+    nativeResponse.result.map((data)=>{
+      allTransactions.push(data)      
+      count+=1
+    })
+  
+    allTransactions.sort(function(x, y){
+      return y.blockTimestamp - x.blockTimestamp;
+    })
+    
+    console.log(count,"Response");
+
+    ApiResponse.successResponseWithData(
+      res,
+      "All Transactions",
+      { TransactionHistory: allTransactions }
+    );
+  } catch (error) {
+    console.log(error, "Error while Fetching transactions for NFTs");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
+
 
 // params: 
 //1. callData  => (includes all details regardiing the function call) -> will explain later.
@@ -772,6 +838,42 @@ const signTransaction = async (req, res) => {
   }
 };
 
+const addStreamAddress = async (req, res) => {
+  try {
+    console.log("Add Stream Address Api Pending");
+    await add(req.query.address)
+    console.log("Add Stream Address Api successfully");
+    ApiResponse.successResponse(
+      res,
+      "Add Stream Address successfully",
+    );
+  } catch (error) {
+    console.log(error, "Error while Adding Stream Address");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
+
+const removeStreamAddress = async (req, res) => {
+  try {
+    console.log("Remove Stream Address Api Pending");
+    await remove(req.query.address)
+    console.log("Remove Stream Address Api successfully");
+    ApiResponse.successResponse(
+      res,
+      "Remove Stream Address successfully",
+    );
+  } catch (error) {
+    console.log(error, "Error while Removing Stream Address");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
+
 module.exports = {
   transactionHistory,
   nativeTokenWalletBalance,
@@ -790,5 +892,8 @@ module.exports = {
   getSpecificNFTsOfUser,
   fetchTokenTransfers,
   fetchNFTTransfers,
-  signTransaction
+  signTransaction,
+  fetchAllMixedTransactions,
+  addStreamAddress,
+  removeStreamAddress
 };

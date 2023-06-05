@@ -39,6 +39,18 @@ class SocketService {
   stringify(data) {
     return JSON.stringify(data);
   }
+
+  handleStreaming(payload) {
+    this.wss.clients.forEach((socket) => {
+      console.log("streaming response send with websocket");
+      socket.send(
+        this.stringify({
+          event: `streaming-to-account-${payload.accountId}`,
+          streamResponse: payload.streamResponse,
+        })
+      );
+    });
+  }
 }
 
 export default SocketService;

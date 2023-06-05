@@ -21,6 +21,8 @@ router.get("/getSpecificNFTsOfUser", Web3Controller.getSpecificNFTsOfUser);
 router.post("/signTransaction", Web3Controller.signTransaction);
 router.get("/fetchTokenTransfers", Web3Controller.fetchTokenTransfers);
 router.get("/fetchNFTTransfers", Web3Controller.fetchNFTTransfers);
+router.get("/fetchAllMixedTransactions", Web3Controller.fetchAllMixedTransactions);
+router.get("/addStreamAddress", Web3Controller.addStreamAddress);
 
 
 // we don't need bellow endpoints from now.   
