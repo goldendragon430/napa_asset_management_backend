@@ -1,5 +1,4 @@
 // web3 functions will come in this file
-
 import ApiResponse from "../utils/api-response";
 import Moralis from "moralis";
 import { ethers, utils } from "ethers";
@@ -9,6 +8,7 @@ import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Uti
 import napaTokenAbi from "../web3Utils/abis/napaTokenAbi.json"
 import napaStakingAbi from "../web3Utils/abis/stakingAbi.json"
 import { getPhraseByProfileId, getPrivateKeyByProfileId } from "../utils/napa-accounts";
+import { add, remove } from "../utils/streams";
 
 // 1.  transaction history - DONE
 // 2.  wallet balance - both (1. custom and 2. native) DONE
@@ -838,6 +838,42 @@ const signTransaction = async (req, res) => {
   }
 };
 
+const addStreamAddress = async (req, res) => {
+  try {
+    console.log("Add Stream Address Api Pending");
+    await add(req.query.address)
+    console.log("Add Stream Address Api successfully");
+    ApiResponse.successResponse(
+      res,
+      "Add Stream Address successfully",
+    );
+  } catch (error) {
+    console.log(error, "Error while Adding Stream Address");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
+
+const removeStreamAddress = async (req, res) => {
+  try {
+    console.log("Remove Stream Address Api Pending");
+    await remove(req.query.address)
+    console.log("Remove Stream Address Api successfully");
+    ApiResponse.successResponse(
+      res,
+      "Remove Stream Address successfully",
+    );
+  } catch (error) {
+    console.log(error, "Error while Removing Stream Address");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
+
 module.exports = {
   transactionHistory,
   nativeTokenWalletBalance,
@@ -857,5 +893,7 @@ module.exports = {
   fetchTokenTransfers,
   fetchNFTTransfers,
   signTransaction,
-  fetchAllMixedTransactions
+  fetchAllMixedTransactions,
+  addStreamAddress,
+  removeStreamAddress
 };
