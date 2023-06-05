@@ -26,7 +26,7 @@ import { getPhraseByProfileId, getPrivateKeyByProfileId } from "../utils/napa-ac
 // 14. fetchTokenTransactions - fetch all ERC20 transactions related to WALLET
 // 15. fetchNFTTransactions - fetch all NFT transactions related to WALLET
 // 16. signTransaction - call any contract function by NAPA wallet(without exposing the private key).
-
+// 17. fetchMixedTransactions - combination of 1)normal Transaction, 2) ERC20 Transaction and 3)NFT Transactions.
 /*
   (1) transactionHistory()  COMPLETE
   request: 
@@ -734,6 +734,72 @@ const fetchNFTTransfers = async (req, res) => {
   }
 }
 
+/*
+  (15) fetchAllMixedTransactions()  COMPLETE
+  request: 
+  params {
+        "chainId":"2",
+        "account":""
+  }
+*/
+const fetchAllMixedTransactions = async (req, res) => {
+  try {
+    const chainData = await getChain(req.query.chainId);
+    const hex = String(chainData?.hex);
+
+    const allTransactions = [];
+
+    const nftResponse = await Moralis.EvmApi.nft.getWalletNFTTransfers({
+      "chain": hex.toString(),
+      "format": "decimal",
+      "direction": "both",
+      "address": (req.query.account).toString()
+    });
+
+    const tokenResponse = await Moralis.EvmApi.token.getWalletTokenTransfers({
+      chain: hex.toString(),
+      address: (req.query.account).toString(),
+    });
+
+    const nativeResponse = await Moralis.EvmApi.transaction.getWalletTransactions({
+      chain: hex.toString(),
+      address: (req.query.account).toString(),
+    });
+
+    let count = 0;
+    nftResponse.result.map((data)=>{
+      allTransactions.push(data)
+      count+=1      
+    })
+    tokenResponse.result.map((data)=>{
+      allTransactions.push(data)      
+      count+=1
+    })
+    nativeResponse.result.map((data)=>{
+      allTransactions.push(data)      
+      count+=1
+    })
+  
+    allTransactions.sort(function(x, y){
+      return y.blockTimestamp - x.blockTimestamp;
+    })
+    
+    console.log(count,"Response");
+
+    ApiResponse.successResponseWithData(
+      res,
+      "All Transactions",
+      { TransactionHistory: allTransactions }
+    );
+  } catch (error) {
+    console.log(error, "Error while Fetching transactions for NFTs");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
+
 
 // params: 
 //1. callData  => (includes all details regardiing the function call) -> will explain later.
@@ -790,5 +856,6 @@ module.exports = {
   getSpecificNFTsOfUser,
   fetchTokenTransfers,
   fetchNFTTransfers,
-  signTransaction
+  signTransaction,
+  fetchAllMixedTransactions
 };
