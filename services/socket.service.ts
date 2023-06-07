@@ -40,12 +40,24 @@ class SocketService {
     return JSON.stringify(data);
   }
 
-  handleStreaming(payload) {
+  handleStreamingERC20TransfersToAccount(payload) {
     this.wss.clients.forEach((socket) => {
       console.log("streaming response send with websocket");
       socket.send(
         this.stringify({
-          event: `streaming-to-account-${payload.accountId}`,
+          event: `streaming-erc20-transfers-to-account-${payload.accountId}`,
+          streamResponse: payload.streamResponse,
+        })
+      );
+    });
+  }
+
+  handleStreamingERC20TransfersFromAccount(payload) {
+    this.wss.clients.forEach((socket) => {
+      console.log("streaming response send with websocket");
+      socket.send(
+        this.stringify({
+          event: `streaming-erc20-transfers-from-account-${payload.accountId}`,
           streamResponse: payload.streamResponse,
         })
       );

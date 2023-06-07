@@ -4,14 +4,22 @@ const webhook = async (req, res) => {
   const { body } = req;
   try {
     console.log(body);
-    console.log("body?.txs[0]?.toAddress", body?.erc20Transfers[0]?.to);
-    
-    // @ts-ignore
-    global.SocketService.handleStreaming({
-      accountId: body?.erc20Transfers[0]?.to,
-      streamResponse: body,
-    });
-    return ApiResponse.successResponse(res, "Stream address added successfully.");
+    if (body?.erc20Transfers[0]) {
+      // @ts-ignore
+      global.SocketService.handleStreamingERC20TransfersToAccount({
+        accountId: body?.erc20Transfers[0]?.to,
+        streamResponse: body,
+      });
+      // @ts-ignore
+      global.SocketService.handleStreamingERC20TransfersFromAccount({
+        accountId: body?.erc20Transfers[0]?.from,
+        streamResponse: body,
+      });
+    }
+    return ApiResponse.successResponse(
+      res,
+      "Stream address added successfully."
+    );
   } catch (e) {
     return res.status(400).json();
   }
