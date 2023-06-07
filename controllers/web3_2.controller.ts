@@ -838,6 +838,41 @@ const signTransaction = async (req, res) => {
   }
 };
 
+const addStreamAddress = async (req, res) => {
+  try {
+    console.log("Add Stream Address Api Pending");
+    await add(req.query.address)
+    console.log("Add Stream Address Api successfully");
+    ApiResponse.successResponse(
+      res,
+      "Add Stream Address successfully",
+    );
+  } catch (error) {
+    console.log(error, "Error while Adding Stream Address");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
+
+const removeStreamAddress = async (req, res) => {
+  try {
+    console.log("Remove Stream Address Api Pending");
+    await remove(req.query.address)
+    console.log("Remove Stream Address Api successfully");
+    ApiResponse.successResponse(
+      res,
+      "Remove Stream Address successfully",
+    );
+  } catch (error) {
+    console.log(error, "Error while Removing Stream Address");
+    res.status(503).json({
+      error,
+      message: error.message
+    });
+  }
+}
 
 // params: 
 //1. callData  => (includes all details regardiing the function call) -> will explain later.
@@ -907,5 +942,7 @@ module.exports = {
   fetchNFTTransfers,
   signTransaction,
   fetchAllMixedTransactions,
+  addStreamAddress,
+  removeStreamAddress,
   getGasFees
 };
