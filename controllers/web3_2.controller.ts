@@ -879,11 +879,11 @@ const removeStreamAddress = async (req, res) => {
 //2. profileId => ("9fd87b56-5394-4724-a140-d48c82ea27a2")
 
 const getGasFees = async (req, res) => {
-  try {
+  try {    
     //getting signer
-    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const pk = await getPrivateKeyByProfileId(req.body.params.callData.profileId);
     const _provider = await setProvider(2);
-    const wallet = new ethers.Wallet(("488b4c368013bbb3feb381d2795a316bd1d2d153d49d150596bded29de46d202").toString());
+    const wallet = new ethers.Wallet((pk).toString());
     const signer = wallet.connect(_provider);
     //
     const convertedABI = JSON.parse(req.body.params.callData.abi);
