@@ -22,7 +22,7 @@ router.post("/signTransaction", Web3Controller.signTransaction);
 router.get("/fetchTokenTransfers", Web3Controller.fetchTokenTransfers);
 router.get("/fetchNFTTransfers", Web3Controller.fetchNFTTransfers);
 router.get("/fetchAllMixedTransactions", Web3Controller.fetchAllMixedTransactions);
-
+router.post("/getGasFees", Web3Controller.getGasFees);
 
 // we don't need bellow endpoints from now.   
 // router.get("/switchNetwork", Web3Controller.switchNetwork);
