@@ -838,6 +838,55 @@ const signTransaction = async (req, res) => {
   }
 };
 
+
+// params: 
+//1. callData  => (includes all details regardiing the function call) -> will explain later.
+//2. profileId => ("9fd87b56-5394-4724-a140-d48c82ea27a2")
+
+const getGasFees = async (req, res) => {
+  try {
+    //getting signer
+    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const _provider = await setProvider(2);
+    const wallet = new ethers.Wallet(("488b4c368013bbb3feb381d2795a316bd1d2d153d49d150596bded29de46d202").toString());
+    const signer = wallet.connect(_provider);
+    //
+    const convertedABI = JSON.parse(req.body.params.callData.abi);
+    const convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
+    const functionName = JSON.parse(req.body.params.callData.funcionName);
+    const allParams = JSON.parse(req.body.params.callData.allParams);
+
+    console.log(convertedContractAddress, allParams, functionName, ".......params......");
+
+    const contract = new ethers.Contract(
+      (convertedContractAddress).toString(),
+      convertedABI.abi,
+      signer
+    )
+    let gasPrice;
+    let gasFees;
+    let gasFeesInEther;
+
+    try {
+      const gasEstimate = await contract.estimateGas[functionName](...allParams);
+      gasPrice = await signer.getGasPrice();
+      gasFees = gasEstimate.mul(gasPrice);
+      gasFeesInEther = ethers.utils.formatEther(gasFees);
+      console.log(gasPrice, gasFees, gasFeesInEther, "gasPrice,gasFees,gasFeesInEther");
+    } catch (error) {
+      console.error('Error:', error);
+    }
+
+    ApiResponse.successResponseWithData(res, "gasFees Fetched", {
+      transactionSuccess: { GasPrice: gasPrice, GasFees: gasFees, GasFeesInEther: gasFeesInEther },
+    });
+  } catch (error) {
+    console.log(error, "Error while fetching signer");
+    res.status(503).send();
+  }
+};
+
+
 module.exports = {
   transactionHistory,
   nativeTokenWalletBalance,
@@ -858,7 +907,5 @@ module.exports = {
   fetchNFTTransfers,
   signTransaction,
   fetchAllMixedTransactions,
-  addStreamAddress,
-  removeStreamAddress,
   getGasFees
 };
