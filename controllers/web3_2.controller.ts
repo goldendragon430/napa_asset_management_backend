@@ -611,9 +611,10 @@ params: {
 */
 const getAllNFTsOfUser = async (req, res) => {
   try {
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    const wallet = new ethers.Wallet(pk);
-    const publicKey = wallet.address;
+    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    // const wallet = new ethers.Wallet(pk);
+    // const publicKey = wallet.address;
+    const publicKey = req.query.address
 
     const chainData = await getChain(req.query.chainId);
     const response = await Moralis.EvmApi.nft.getWalletNFTs({
