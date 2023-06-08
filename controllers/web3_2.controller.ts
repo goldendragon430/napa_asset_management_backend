@@ -3,6 +3,7 @@ import ApiResponse from "../utils/api-response";
 import Moralis from "moralis";
 import { ethers, utils } from "ethers";
 import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
+import nftABI from "../web3Utils/abis/nft.json";
 import { getChain, setProvider } from "../web3Utils/chainHelper";
 import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Utils/addresses";
 import napaTokenAbi from "../web3Utils/abis/napaTokenAbi.json"
@@ -317,7 +318,7 @@ const importTokens = async (req, res) => {
 
 const importAccountFromPrivateKey = async (req, res) => {
   try {
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const pk = (req.query.privateKey).toString();
     const wallet = new ethers.Wallet(pk);
     wallet.getAddress().then(async (response: any) => {
       console.log("publicKey: '", await response, "'");
@@ -343,21 +344,23 @@ const importAccountFromPrivateKey = async (req, res) => {
 
 const importAccountFromPhrase = async (req, res) => {
   try {
-    const pk = await getPhraseByProfileId('9fd87b56-5394-4724-a140-d48c82ea27a2')
+    const pk = (req.query.phrase).toString();
     const hdNode = utils.HDNode.fromMnemonic(pk);
 
     const firstAccount = hdNode.derivePath(`m/44'/60'/0'/0/0`); // This returns a new HDNode
     const secondAccount = hdNode.derivePath(`m/44'/60'/0'/0/1`);
     const thirdAccount = hdNode.derivePath(`m/44'/60'/0'/0/2`);
     const fourthAccount = hdNode.derivePath(`m/44'/60'/0'/0/3`);
+    const fifthAccount = hdNode.derivePath(`m/44'/60'/0'/0/3`);
 
     console.log("First Account", firstAccount);
     console.log("Second Account ", secondAccount);
     console.log("Third Account", thirdAccount);
     console.log("Fourth Account", fourthAccount);
+    console.log("fifth Account", fifthAccount);
 
     ApiResponse.successResponseWithData(res, "Wallet successfully imported By Phrase ", {
-      tokenData: { firstAccount },
+      tokenData: { firstAccount,secondAccount,thirdAccount,fourthAccount,fifthAccount },
     });
   } catch (error) {
     console.log(error, "Error while Importing Wallet");
@@ -374,26 +377,45 @@ const importAccountFromPhrase = async (req, res) => {
       "tokenId":68
       }
 */
-
+// Belephant
 const importNFTs = async (req, res) => {
   try {
+    let _res;
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const _wallet = new ethers.Wallet(pk);
+    const publicKey = _wallet.address;
     const chainData = await getChain(req.query.chainId);
+
+    const contractAddress = (req.query.contract).toString();
+    const tokenId = (req.query.tokenId).toString();
+    const provider = await setProvider(req.query.chainId);
+
     console.log(String(chainData?.hex))
+    
     const response = await Moralis.EvmApi.nft.getNFTTokenIdOwners({
       "chain": String(chainData.hex),
       "format": "decimal",
       "mediaItems": false,
-      "address": (req.query.contract).toString(),
-      "tokenId": (req.query.tokenId).toString()
+      "address": contractAddress,
+      "tokenId": tokenId
     });
 
-    console.log(await response, "NFT data....!");
+    const _ctr = new ethers.Contract(contractAddress,nftABI.abi,provider);
+    const owner =await _ctr.ownerOf(tokenId);
+    console.log(await owner,publicKey,"ownerownerownerownerownerownerowner")
+    if(owner.toString() === publicKey.toString()){
+      _res = response;
+    }else{
+      _res = "NFT can’t be added as the ownership details do not match. Make sure you have entered correct information.";
+    }
+
+    console.log(await _res, "NFT data....!");
 
     ApiResponse.successResponseWithData(res, "NFT imported Successfully ", {
-      tokenData: { response },
+      tokenData: { _res },
     });
   } catch (error) {
-    console.log(error, "Error while Importing Wallet");
+    console.log(error, "Error while Importing an NFT");
     res.status(503).send();
   }
 };
@@ -645,9 +667,10 @@ params: {
 
 const getSpecificNFTsOfUser = async (req, res) => {
   try {
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    const wallet = new ethers.Wallet(pk);
-    const publicKey = wallet.address;
+    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    // const wallet = new ethers.Wallet(pk);
+    // const publicKey = wallet.address;
+    const publicKey = req.query.address
 
     const chainData = await getChain(req.query.chainId);
     let tokens: Array<string> = []
