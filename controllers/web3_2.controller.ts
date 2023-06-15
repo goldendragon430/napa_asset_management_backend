@@ -3,6 +3,7 @@ import ApiResponse from "../utils/api-response";
 import Moralis from "moralis";
 import { ethers, utils } from "ethers";
 import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
+import commonNFTAbi from "../web3Utils/abis/nft.json";
 import nftABI from "../web3Utils/abis/nft.json";
 import { getChain, setProvider } from "../web3Utils/chainHelper";
 import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Utils/addresses";
@@ -360,7 +361,7 @@ const importAccountFromPhrase = async (req, res) => {
     console.log("fifth Account", fifthAccount);
 
     ApiResponse.successResponseWithData(res, "Wallet successfully imported By Phrase ", {
-      tokenData: { firstAccount,secondAccount,thirdAccount,fourthAccount,fifthAccount },
+      tokenData: { firstAccount, secondAccount, thirdAccount, fourthAccount, fifthAccount },
     });
   } catch (error) {
     console.log(error, "Error while Importing Wallet");
@@ -391,7 +392,7 @@ const importNFTs = async (req, res) => {
     const provider = await setProvider(req.query.chainId);
 
     console.log(String(chainData?.hex))
-    
+
     const response = await Moralis.EvmApi.nft.getNFTTokenIdOwners({
       "chain": String(chainData.hex),
       "format": "decimal",
@@ -400,12 +401,12 @@ const importNFTs = async (req, res) => {
       "tokenId": tokenId
     });
 
-    const _ctr = new ethers.Contract(contractAddress,nftABI.abi,provider);
-    const owner =await _ctr.ownerOf(tokenId);
-    console.log(await owner,publicKey,"ownerownerownerownerownerownerowner")
-    if(owner.toString() === publicKey.toString()){
+    const _ctr = new ethers.Contract(contractAddress, nftABI.abi, provider);
+    const owner = await _ctr.ownerOf(tokenId);
+    console.log(await owner, publicKey, "ownerownerownerownerownerownerowner")
+    if (owner.toString() === publicKey.toString()) {
       _res = response;
-    }else{
+    } else {
       _res = "NFT can’t be added as the ownership details do not match. Make sure you have entered correct information.";
     }
 
@@ -903,7 +904,7 @@ const removeStreamAddress = async (req, res) => {
 //2. profileId => ("9fd87b56-5394-4724-a140-d48c82ea27a2")
 
 const getGasFees = async (req, res) => {
-  try {    
+  try {
     //getting signer
     const pk = await getPrivateKeyByProfileId(req.body.params.callData.profileId);
     const _provider = await setProvider(2);
@@ -946,6 +947,71 @@ const getGasFees = async (req, res) => {
 };
 
 
+/*
+  (22) sendNFT() COMPLETE
+  request: 
+  params: {
+      "chainId":2,
+      "profileId":'',
+      "nftId":1,
+      "contract_address":0xFee897E3a3F12a1550E73b8437C20301325Cc98F 
+      "receiver_address": receivers wallet address
+      }
+*/
+
+const sendNFT = async (req, res) => {
+  try {
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const wallet = new ethers.Wallet((pk).toString());
+    const _provider = await setProvider(req.query.chainId);
+    const walletSigner = wallet.connect(_provider);
+    const publicKey = wallet.address;
+    let errors = "No Errors!"
+    console.log("_+_+__+_++_+_", req.query.receiver_address, publicKey, req.query.contract_address, req.query.nftId, "_+_+__+_++_+_")
+    try {
+      //NFT contract
+      const contract = new ethers.Contract(
+        (req.query.contract_address).toString(),
+        commonNFTAbi.abi,
+        walletSigner
+      )
+      const collectionName = await contract.name();
+      console.log(collectionName, "collectionName");
+      const owner = await contract.ownerOf((req.query.nftId).toString());
+      console.log(owner, "OWNER");
+      if (owner.toString() != (publicKey).toString()) {
+        errors = "You're not the Owner of this NFT";
+      }
+      // Send an NFT
+      if (owner.toString() == (publicKey).toString()) {
+        contract.transferFrom((publicKey).toString()
+          , (req.query.receiver_address).toString()
+          , (req.query.nftId)).then((transferResult: any) => {
+            console.log(transferResult, "NFT sending response");
+            ApiResponse.successResponseWithData(
+              res,
+              `NFT of Collection "${collectionName}" with Id ${(req.query.tokenId).toString()} sent successfully to ${req.query.receiver_address}.`,
+              { CustomTokenSend: transferResult, errors }
+            );
+          })
+      } else {
+        ApiResponse.successResponseWithData(
+          res,
+          errors,
+          { CustomTokenSend: errors }
+        );
+      }
+    }
+    catch (error) {
+      console.log(error, "failed to send!!")
+    }
+  } catch (error) {
+    console.log(error, "Unknown Error while Sending an NFT");
+    res.status(503).send();
+  }
+};
+
+
 module.exports = {
   transactionHistory,
   nativeTokenWalletBalance,
@@ -968,5 +1034,6 @@ module.exports = {
   fetchAllMixedTransactions,
   addStreamAddress,
   removeStreamAddress,
-  getGasFees
+  getGasFees,
+  sendNFT
 };
