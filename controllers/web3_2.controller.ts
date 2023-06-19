@@ -52,18 +52,16 @@ const transactionHistory = async (req, res) => {
         { TransactionHistory: response }
       );
     }).catch((e: any) => {
-      return ApiResponse.successResponseWithData(
+      return ApiResponse.ErrorResponse(
         res,
-        "Error while fetching Transactions",
-        { TransactionHistory: e }
+        "Error while fetching Transactions"
       );
     });
   } catch (error) {
     console.log(error, "Error while Fetching transactions");
-    return ApiResponse.successResponseWithData(
+    return ApiResponse.ErrorResponse(
       res,
-      "Transactions fetched successfully",
-      { TransactionHistory: "Transactions fetched successfully" }
+      "Transactions fetched successfully"
     );
   }
 };
@@ -98,14 +96,10 @@ const nativeTokenWalletBalance = async (req, res) => {
       });
     }).catch((e: any) => {
       console.log(e, "Error while fetching Native Token Balance");
-      return ApiResponse.successResponseWithData(res, "Error while fetching Native Token Balance", {
-        NativeTokenWalletBalance: e,
-      });
+      return ApiResponse.ErrorResponse(res, "Error while fetching Native Token Balance");
     });
   } catch (e: any) {
-    return ApiResponse.successResponseWithData(res, "Error while fetching Native Token Balance", {
-      NativeTokenWalletBalance: e,
-    });
+    return ApiResponse.ErrorResponse(res, "Error while fetching Native Token Balance");
     // res.status(503).send();
   }
 };
@@ -143,19 +137,17 @@ const customTokenWalletBalance = async (req, res) => {
         { CustomTokenWalletBalance: response }
       );
     }).catch((e: any) => {
-      return ApiResponse.successResponseWithData(
+      return ApiResponse.ErrorResponse(
         res,
-        "Error while Fetching Custom Balance",
-        { CustomTokenWalletBalance: e }
+        "Error while Fetching Custom Balance"
       );
     });
 
   } catch (error) {
     console.log(error, "Error while Fetching Custom Token balance");
-    return ApiResponse.successResponseWithData(
+    return ApiResponse.ErrorResponse(
       res,
-      "Error while Fetching Custom Balance",
-      { CustomTokenWalletBalance: error }
+      "Error while Fetching Custom Balance"
     );
     // res.status(503).send();
   }
@@ -239,41 +231,36 @@ const sendNativeToken = async (req, res) => {
             );
           } catch (error) {
             console.log("failed to send!!");
-            return ApiResponse.successResponseWithData(
+            return ApiResponse.ErrorResponse(
               res,
-              "failed to send!!",
-              { NativeTokenSend: error }
+              "failed to send!!"
             );
           }
         }).catch((e: any) => {
           console.log("Error while Fetching gasPrice", e);
-          return ApiResponse.successResponseWithData(
+          return ApiResponse.ErrorResponse(
             res,
-            "Error while Fetching gasPrice",
-            { NativeTokenSend: "Error while Fetching gasPrice" }
-          );
+            "Error while Fetching gasPrice"
+            );
         })
       } else {
-        return ApiResponse.successResponseWithData(
+        return ApiResponse.ErrorResponse(
           res,
-          "Transfer Amount Exceeds Balance",
-          { NativeTokenSend: "Transfer Amount Exceeds Balance" }
+          "Transfer Amount Exceeds Balance"
         );
       }
     } else {
       console.log("couldn't get the provider");
-      return ApiResponse.successResponseWithData(
+      return ApiResponse.ErrorResponse(
         res,
-        "couldn't get the provider",
-        { NativeTokenSend: "couldn't get the provider" }
+        "couldn't get the provider"
       );
     }
   } catch (error) {
     console.log(error, "Unknown Error while Sending Tokens");
-    return ApiResponse.successResponseWithData(
+    return ApiResponse.ErrorResponse(
       res,
-      "Unknown Error while Sending Tokens",
-      { NativeTokenSend: error }
+      "Unknown Error while Sending Tokens"
     );
     // res.status(503).send();
   }
@@ -320,35 +307,31 @@ const sendCustomToken = async (req, res) => {
           );
         }).catch(async (e: any) => {
           console.log("Error While Sending Custom Tokens.", e.error.reason);
-          return ApiResponse.successResponseWithData(
+          return ApiResponse.ErrorResponse(
             res,
-            "Error While Sending Custom Tokens.",
-            { Error_While_Sending_Custom_Tokens: e.error.reason }
+            "Error While Sending Custom Tokens."
           );
         })
       } else {
         console.log("Insufficient Balance");
-        return ApiResponse.successResponseWithData(
+        return ApiResponse.ErrorResponse(
           res,
-          "Error While Sending Custom Tokens.",
-          { Error_While_Sending_Custom_Tokens: "Transfer Amount Exceeds Balance" }
+          "Error While Sending Custom Tokens."
         );
       }
     }
     catch (error) {
       console.log("failed to send!!");
-      return ApiResponse.successResponseWithData(
+      return ApiResponse.ErrorResponse(
         res,
-        "Error While Sending Custom Tokens.",
-        { Error_While_Sending_Custom_Tokens: error }
+        "Error While Sending Custom Tokens."
       );
     }
   } catch (error) {
     console.log(error, "Unknown Error while Sending Custom Tokens");
-    return ApiResponse.successResponseWithData(
+    return ApiResponse.ErrorResponse(
       res,
-      "Error while sending custom Tokens",
-      { Error_While_Sending_Custom_Tokens: error }
+      "Error while sending custom Tokens"
     );
   }
 };
@@ -378,15 +361,11 @@ const importTokens = async (req, res) => {
         tokenData: { response },
       });
     }).catch((e: any) => {
-      return ApiResponse.successResponseWithData(res, "Error While Importing Tokens", {
-        tokenData: { e },
-      });
+      return ApiResponse.ErrorResponse(res, "Error While Importing Tokens");
     });
   } catch (error) {
     console.log(error, "Error while Importing Token");
-    return ApiResponse.successResponseWithData(res, "Error While Importing Tokens", {
-      tokenData: { error },
-    });
+    return ApiResponse.ErrorResponse(res, "Error While Importing Tokens");
     // res.status(503).send();
   }
 };
@@ -495,15 +474,11 @@ const importNFTs = async (req, res) => {
         tokenData: { response },
       });
     }).catch((e: any) => {
-      return ApiResponse.successResponseWithData(res, "Error While Imporitng an NFT", {
-        tokenData: { e },
-      });
+      return ApiResponse.ErrorResponse(res, "Error While Imporitng an NFT");
     });
   } catch (error) {
     console.log(error, "Error while Importing an NFT");
-    return ApiResponse.successResponseWithData(res, "Error While Imporitng an NFT", {
-      tokenData: { error },
-    });
+    return ApiResponse.ErrorResponse(res, "Error While Imporitng an NFT");
     // res.status(503).send();
   }
 };
@@ -736,15 +711,11 @@ const getAllNFTsOfUser = async (req, res) => {
       });
     }).catch((e: any) => {
       console.log(e, "Error");
-      return ApiResponse.successResponseWithData(res, "Error While Fetching All NFTs of User", {
-        tokenData: { e },
-      });
+      return ApiResponse.ErrorResponse(res, "Error While Fetching All NFTs of User");
     });
   } catch (error) {
     console.log(error, "Error while Importing Account");
-    return ApiResponse.successResponseWithData(res, "Error While Fetching All NFTs of User", {
-      tokenData: { error },
-    });
+    return ApiResponse.ErrorResponse(res, "Error While Fetching All NFTs of User");
     // res.status(503).send();
   }
 };
@@ -778,15 +749,11 @@ const getSpecificNFTsOfUser = async (req, res) => {
         tokenData: { response },
       });
     }).catch((e: any) => {
-      return ApiResponse.successResponseWithData(res, "Error whiole Fetching Specific NFTs.", {
-        tokenData: { e },
-      });
+      return ApiResponse.ErrorResponse(res, "Error whiole Fetching Specific NFTs.");
     });
   } catch (error) {
     console.log(error, "Error while Importing Account");
-    return ApiResponse.successResponseWithData(res, "Error whiole Fetching Specific NFTs.", {
-      tokenData: { error },
-    });
+    return ApiResponse.ErrorResponse(res, "Error whiole Fetching Specific NFTs.");
     // res.status(503).send();
   }
 };
@@ -816,18 +783,16 @@ const fetchTokenTransfers = async (req, res) => {
         { TransactionHistory: response }
       );
     }).catch((e: any) => {
-      return ApiResponse.successResponseWithData(
+      return ApiResponse.ErrorResponse(
         res,
-        "Error while Fetching Token Transactions",
-        { TransactionHistory: e }
+        "Error while Fetching Token Transactions"
       );
     });
   } catch (error) {
     console.log(error, "Error while Fetching transactions for ERC20 Tokens");
-    return ApiResponse.successResponseWithData(
+    return ApiResponse.ErrorResponse(
       res,
-      "Error while Fetching Token Transactions",
-      { TransactionHistory: error }
+      "Error while Fetching Token Transactions"
     );
     // res.status(503).json({
     //   error,
@@ -862,18 +827,16 @@ const fetchNFTTransfers = async (req, res) => {
       );
     }).catch((e: any) => {
       console.log(e, "Error While Fetching NFT Transactions");
-      return ApiResponse.successResponseWithData(
+      return ApiResponse.ErrorResponse(
         res,
-        "Error While Fetching NFT Transactions",
-        { TransactionHistory: e }
+        "Error While Fetching NFT Transactions"
       );
     });
   } catch (error) {
     console.log(error, "Error while Fetching transactions for NFTs");
-    return ApiResponse.successResponseWithData(
+    return ApiResponse.ErrorResponse(
       res,
-      "Error While Fetching NFT Transactions",
-      { TransactionHistory: error }
+      "Error While Fetching NFT Transactions"
     );
     // res.status(503).json({
     //   error,
@@ -933,10 +896,9 @@ const fetchAllMixedTransactions = async (req, res) => {
         { TransactionHistory: allTransactions }
       );
     }).catch((e: any) => {
-      return ApiResponse.successResponseWithData(
+      return ApiResponse.ErrorResponse(
         res,
-        "Error While Fetching All Transactions",
-        { TransactionHistory: e }
+        "Error While Fetching All Transactions"
       );
     });
   } catch (error) {
@@ -945,10 +907,9 @@ const fetchAllMixedTransactions = async (req, res) => {
     //   transactionError,
     //   "Error in fetching transactions",
     // );
-    return ApiResponse.successResponseWithData(
+    return ApiResponse.ErrorResponse(
       res,
-      "Error While Fetching All Transactions",
-      { TransactionHistory: error }
+      "Error While Fetching All Transactions"
     );
     // res.status(503).json({
     //   error,
@@ -988,15 +949,11 @@ const signTransaction = async (req, res) => {
         transactionSuccess: { response },
       });
     }).catch((e: any) => {
-      return ApiResponse.successResponseWithData(res, "error while Performing the Transactions!", {
-        transactionSuccess: { e },
-      });
+      return ApiResponse.ErrorResponse(res, "error while Performing the Transactions!");
     });
   } catch (error) {
     console.log(error, "Error while fetching signer");
-    return ApiResponse.successResponseWithData(res, "error while Performing the Transactions!", {
-      transactionSuccess: { error },
-    });
+    return ApiResponse.ErrorResponse(res, "error while Performing the Transactions!");
     // res.status(503).send();
   }
 };
@@ -1073,18 +1030,14 @@ const getGasFees = async (req, res) => {
       console.log(gasPrice, gasFees, gasFeesInEther, "gasPrice,gasFees,gasFeesInEther");
     } catch (error) {
       console.error('Error:', error);
-      return ApiResponse.successResponseWithData(res, "Error while Fetching the GasFees", {
-        transactionSuccess: { error },
-      });
+      return ApiResponse.ErrorResponse(res, "Error while Fetching the GasFees");
     }
     return ApiResponse.successResponseWithData(res, "gasFees Fetched", {
       transactionSuccess: { GasPrice: gasPrice, GasFees: gasFees, GasFeesInEther: gasFeesInEther },
     });
   } catch (error) {
     console.log(error, "Error while fetching signer");
-    return ApiResponse.successResponseWithData(res, "Error while Fetching the GasFees", {
-      transactionSuccess: { error },
-    });
+    return ApiResponse.ErrorResponse(res, "Error while Fetching the GasFees");
     // res.status(503).send();
   }
 };
@@ -1138,28 +1091,25 @@ const sendNFT = async (req, res) => {
             );
           })
       } else {
-        ApiResponse.successResponseWithData(
+        ApiResponse.ErrorResponse(
           res,
           errors,
-          { CustomTokenSend: errors }
         );
       }
     }
     catch (error) {
       console.log(error.reason, "failed to send!!")
       errors = error.reason
-      ApiResponse.successResponseWithData(
+      ApiResponse.ErrorResponse(
         res,
         errors,
-        { CustomTokenSend: errors }
       );
     }
   } catch (error) {
     console.log(error, "Unknown Error while Sending an NFT");
-    ApiResponse.successResponseWithData(
+    ApiResponse.ErrorResponse(
       res,
-      error,
-      { CustomTokenSend: error }
+      'Error while Sending an NFT',
     );
     // res.status(503).send();
   }
