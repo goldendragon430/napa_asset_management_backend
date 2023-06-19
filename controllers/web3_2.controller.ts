@@ -63,7 +63,7 @@ const transactionHistory = async (req, res) => {
     return ApiResponse.successResponseWithData(
       res,
       "Transactions fetched successfully",
-      { TransactionHistory:  "Transactions fetched successfully"}
+      { TransactionHistory: "Transactions fetched successfully" }
     );
   }
 };
@@ -308,7 +308,7 @@ const sendCustomToken = async (req, res) => {
       const numberOfTokens = ethers.utils.parseUnits(req.query.amount, 18)
       console.log(`numberOfTokens: ${numberOfTokens}`);
       const balance = await contract.balanceOf(publicKey.toString());
-      console.log(Number(numberOfTokens) <= Number(balance),Number(numberOfTokens), Number(balance),"BAL")
+      console.log(Number(numberOfTokens) <= Number(balance), Number(numberOfTokens), Number(balance), "BAL")
       if (Number(numberOfTokens) <= Number(balance)) {
         console.log("Had Enough Balance");
         // Send tokens
@@ -948,7 +948,7 @@ const fetchAllMixedTransactions = async (req, res) => {
     return ApiResponse.successResponseWithData(
       res,
       "Error While Fetching All Transactions",
-      { TransactionHistory: transactionError }
+      { TransactionHistory: error }
     );
     // res.status(503).json({
     //   error,
