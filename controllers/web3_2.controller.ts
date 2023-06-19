@@ -948,7 +948,7 @@ const fetchAllMixedTransactions = async (req, res) => {
     return ApiResponse.successResponseWithData(
       res,
       "Error While Fetching All Transactions",
-      { TransactionHistory: error }
+      { TransactionHistory: transactionError }
     );
     // res.status(503).json({
     //   error,
