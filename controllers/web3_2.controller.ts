@@ -40,24 +40,31 @@ import { add, remove } from "../utils/streams";
 
 const transactionHistory = async (req, res) => {
   try {
-
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
-    const response = await Moralis.EvmApi.transaction.getWalletTransactions({
+    await Moralis.EvmApi.transaction.getWalletTransactions({
       chain: hex.toString(),
       address: (req.query.account).toString(),
+    }).then((response: any) => {
+      return ApiResponse.successResponseWithData(
+        res,
+        "Transactions fetched successfully",
+        { TransactionHistory: response }
+      );
+    }).catch((e: any) => {
+      return ApiResponse.successResponseWithData(
+        res,
+        "Error while fetching Transactions",
+        { TransactionHistory: e }
+      );
     });
-    ApiResponse.successResponseWithData(
-      res,
-      "Transactions fetched successfully",
-      { TransactionHistory: response }
-    );
   } catch (error) {
     console.log(error, "Error while Fetching transactions");
-    res.status(503).json({
-      error,
-      message: error.message
-    });
+    return ApiResponse.successResponseWithData(
+      res,
+      "Transactions fetched successfully",
+      { TransactionHistory: "Transactions fetched successfully" }
+    );
   }
 };
 
@@ -75,25 +82,31 @@ const nativeTokenWalletBalance = async (req, res) => {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const wallet = new ethers.Wallet(pk);
     const publicKey = wallet.address;
-
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
-    const response = await Moralis.EvmApi.balance.getNativeBalance({
+    await Moralis.EvmApi.balance.getNativeBalance({
       "chain": hex.toString(),
       "address": publicKey.toString()
+    }).then((response: any) => {
+      console.log(
+        response,
+        `Balance of ${response}`
+      );
+      return ApiResponse.successResponseWithData(res, "Native Balance fetched successfully", {
+        NativeTokenWalletBalance: response,
+      });
+    }).catch((e: any) => {
+      console.log(e, "Error while fetching Native Token Balance");
+      return ApiResponse.successResponseWithData(res, "Error while fetching Native Token Balance", {
+        NativeTokenWalletBalance: e,
+      });
     });
-    console.log(
-      response,
-      `Balance of ${response}`
-    );
-
-    ApiResponse.successResponseWithData(res, "Native Balance fetched successfully", {
-      NativeTokenWalletBalance: response,
+  } catch (e: any) {
+    return ApiResponse.successResponseWithData(res, "Error while fetching Native Token Balance", {
+      NativeTokenWalletBalance: e,
     });
-  } catch (error) {
-    console.log(error, "Error while Fetching balance");
-    res.status(503).send();
+    // res.status(503).send();
   }
 };
 
@@ -112,30 +125,39 @@ const customTokenWalletBalance = async (req, res) => {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const wallet = new ethers.Wallet(pk);
     const publicKey = wallet.address;
-
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
     // fetching balance for all tokens. 
     let tokens: Array<string> = []
-
     tokens = req.query.tokenAddresses.split(',');
 
-    const response = await Moralis.EvmApi.token.getWalletTokenBalances({
+    await Moralis.EvmApi.token.getWalletTokenBalances({
       "chain": hex,
       "tokenAddresses": tokens,
       "address": (publicKey).toString()
+    }).then((response: any) => {
+      return ApiResponse.successResponseWithData(
+        res,
+        "Balance fetched for Custom Tokens successfully",
+        { CustomTokenWalletBalance: response }
+      );
+    }).catch((e: any) => {
+      return ApiResponse.successResponseWithData(
+        res,
+        "Error while Fetching Custom Balance",
+        { CustomTokenWalletBalance: e }
+      );
     });
 
-
-    ApiResponse.successResponseWithData(
-      res,
-      "Balance fetched for Custom Tokens successfully",
-      { CustomTokenWalletBalance: response }
-    );
   } catch (error) {
     console.log(error, "Error while Fetching Custom Token balance");
-    res.status(503).send();
+    return ApiResponse.successResponseWithData(
+      res,
+      "Error while Fetching Custom Balance",
+      { CustomTokenWalletBalance: error }
+    );
+    // res.status(503).send();
   }
 };
 
@@ -190,40 +212,70 @@ const sendNativeToken = async (req, res) => {
     const _provider = await setProvider(req.query.chainId);
     const walletSigner = wallet.connect(_provider);
 
+    const balance = await (_provider.getBalance(publicKey));
+    console.log(Number((balance).toString()) / (10 ** 18), "balance");
     if (_provider) {
-      _provider.getGasPrice().then(async (currentGasPrice: any) => {
-        const gas_price = ethers.utils.hexlify((currentGasPrice));
-        const gas_limit: any = 100000;
-        const tx = {
-          from: publicKey,
-          to: req.query.receiver_address,
-          value: ethers.utils.parseEther(req.query.amount),
-          nonce: _provider.getTransactionCount(
-            publicKey,
-            "latest"
-          ),
-          gasLimit: ethers.utils.hexlify(gas_limit), // 100000
-          gasPrice: gas_price,
-        }
-        try {
-          const response: any = await walletSigner.sendTransaction(tx)
-          ApiResponse.successResponseWithData(
+      if (Number(balance) / (10 ** 18) > Number(req.query.amount)) {
+        _provider.getGasPrice().then(async (currentGasPrice: any) => {
+          const gas_price = ethers.utils.hexlify((currentGasPrice));
+          const gas_limit: any = 100000;
+          const tx = {
+            from: publicKey,
+            to: req.query.receiver_address,
+            value: ethers.utils.parseEther(req.query.amount),
+            nonce: _provider.getTransactionCount(
+              publicKey,
+              "latest"
+            ),
+            gasLimit: ethers.utils.hexlify(gas_limit), // 100000
+            gasPrice: gas_price,
+          }
+          try {
+            const response: any = await walletSigner.sendTransaction(tx)
+            return ApiResponse.successResponseWithData(
+              res,
+              "Native Tokens sent successfully.",
+              { NativeTokenSend: response }
+            );
+          } catch (error) {
+            console.log("failed to send!!");
+            return ApiResponse.successResponseWithData(
+              res,
+              "failed to send!!",
+              { NativeTokenSend: error }
+            );
+          }
+        }).catch((e: any) => {
+          console.log("Error while Fetching gasPrice", e);
+          return ApiResponse.successResponseWithData(
             res,
-            "Native Tokens sent successfully.",
-            { NativeTokenSend: response }
+            "Error while Fetching gasPrice",
+            { NativeTokenSend: "Error while Fetching gasPrice" }
           );
-        } catch (error) {
-          console.log("failed to send!!")
-        }
-      }).catch((e: any) => {
-        console.log("Error while Fetching gasPrice", e);
-      })
+        })
+      } else {
+        return ApiResponse.successResponseWithData(
+          res,
+          "Transfer Amount Exceeds Balance",
+          { NativeTokenSend: "Transfer Amount Exceeds Balance" }
+        );
+      }
     } else {
       console.log("couldn't get the provider");
+      return ApiResponse.successResponseWithData(
+        res,
+        "couldn't get the provider",
+        { NativeTokenSend: "couldn't get the provider" }
+      );
     }
   } catch (error) {
     console.log(error, "Unknown Error while Sending Tokens");
-    res.status(503).send();
+    return ApiResponse.successResponseWithData(
+      res,
+      "Unknown Error while Sending Tokens",
+      { NativeTokenSend: error }
+    );
+    // res.status(503).send();
   }
 };
 
@@ -245,6 +297,7 @@ const sendCustomToken = async (req, res) => {
     const wallet = new ethers.Wallet((pk).toString());
     const _provider = await setProvider(req.query.chainId);
     const walletSigner = wallet.connect(_provider);
+    const publicKey = wallet.address;
 
     try {
       const contract = new ethers.Contract(
@@ -252,29 +305,52 @@ const sendCustomToken = async (req, res) => {
         commonTokenAbi.abi,
         walletSigner
       )
-
       const numberOfTokens = ethers.utils.parseUnits(req.query.amount, 18)
-      console.log(`numberOfTokens: ${numberOfTokens}`)
-
-      // Send tokens
-      contract.transfer((req.query.receiver_address).toString(), (numberOfTokens).toString()).then((transferResult: any) => {
-        console.log(transferResult)
-
-        ApiResponse.successResponseWithData(
+      console.log(`numberOfTokens: ${numberOfTokens}`);
+      const balance = await contract.balanceOf(publicKey.toString());
+      console.log(Number(numberOfTokens) <= Number(balance), Number(numberOfTokens), Number(balance), "BAL")
+      if (Number(numberOfTokens) <= Number(balance)) {
+        console.log("Had Enough Balance");
+        // Send tokens
+        contract.transfer((req.query.receiver_address).toString(), (numberOfTokens).toString()).then(async (transferResult: any) => {
+          return ApiResponse.successResponseWithData(
+            res,
+            "Custom Tokens sent successfully.",
+            { Error_While_Sending_Custom_Tokens: transferResult }
+          );
+        }).catch(async (e: any) => {
+          console.log("Error While Sending Custom Tokens.", e.error.reason);
+          return ApiResponse.successResponseWithData(
+            res,
+            "Error While Sending Custom Tokens.",
+            { Error_While_Sending_Custom_Tokens: e.error.reason }
+          );
+        })
+      } else {
+        console.log("Insufficient Balance");
+        return ApiResponse.successResponseWithData(
           res,
-          "Custom Tokens sent successfully.",
-          { CustomTokenSend: transferResult }
+          "Error While Sending Custom Tokens.",
+          { Error_While_Sending_Custom_Tokens: "Transfer Amount Exceeds Balance" }
         );
-      })
+      }
     }
     catch (error) {
-      console.log("failed to send!!")
+      console.log("failed to send!!");
+      return ApiResponse.successResponseWithData(
+        res,
+        "Error While Sending Custom Tokens.",
+        { Error_While_Sending_Custom_Tokens: error }
+      );
     }
   } catch (error) {
     console.log(error, "Unknown Error while Sending Custom Tokens");
-    res.status(503).send();
+    return ApiResponse.successResponseWithData(
+      res,
+      "Error while sending custom Tokens",
+      { Error_While_Sending_Custom_Tokens: error }
+    );
   }
-  console.timeEnd();
 };
 
 
@@ -294,18 +370,24 @@ const importTokens = async (req, res) => {
     const chainData = await getChain(req.query.chainId);
     const sortedAddresses = req.query.contracts.split(",");
 
-    const response = await Moralis.EvmApi.token.getTokenMetadata({
+    await Moralis.EvmApi.token.getTokenMetadata({
       "chain": String(chainData?.hex),
       "addresses": sortedAddresses
+    }).then((response: any) => {
+      return ApiResponse.successResponseWithData(res, "Tokens Imported successfully", {
+        tokenData: { response },
+      });
+    }).catch((e: any) => {
+      return ApiResponse.successResponseWithData(res, "Error While Importing Tokens", {
+        tokenData: { e },
+      });
     });
-
-    ApiResponse.successResponseWithData(res, "Tokens Imported successfully", {
-      tokenData: { response },
-    });
-
   } catch (error) {
     console.log(error, "Error while Importing Token");
-    res.status(503).send();
+    return ApiResponse.successResponseWithData(res, "Error While Importing Tokens", {
+      tokenData: { error },
+    });
+    // res.status(503).send();
   }
 };
 
@@ -393,31 +475,36 @@ const importNFTs = async (req, res) => {
 
     console.log(String(chainData?.hex))
 
-    const response = await Moralis.EvmApi.nft.getNFTTokenIdOwners({
+    await Moralis.EvmApi.nft.getNFTTokenIdOwners({
       "chain": String(chainData.hex),
       "format": "decimal",
       "mediaItems": false,
       "address": contractAddress,
       "tokenId": tokenId
-    });
-
-    const _ctr = new ethers.Contract(contractAddress, nftABI.abi, provider);
-    const owner = await _ctr.ownerOf(tokenId);
-    console.log(await owner, publicKey, "ownerownerownerownerownerownerowner")
-    if (owner.toString() === publicKey.toString()) {
-      _res = response;
-    } else {
-      _res = "NFT can’t be added as the ownership details do not match. Make sure you have entered correct information.";
-    }
-
-    console.log(await _res, "NFT data....!");
-
-    ApiResponse.successResponseWithData(res, "NFT imported Successfully ", {
-      tokenData: { _res },
+    }).then(async (response: any) => {
+      const _ctr = new ethers.Contract(contractAddress, nftABI.abi, provider);
+      const owner = await _ctr.ownerOf(tokenId);
+      console.log(await owner, publicKey, "owner")
+      if (owner.toString() === publicKey.toString()) {
+        _res = response;
+      } else {
+        _res = "NFT can’t be added as the ownership details do not match. Make sure you have entered correct information.";
+      }
+      console.log(await _res, "NFT data....!");
+      return ApiResponse.successResponseWithData(res, "NFT imported Successfully ", {
+        tokenData: { response },
+      });
+    }).catch((e: any) => {
+      return ApiResponse.successResponseWithData(res, "Error While Imporitng an NFT", {
+        tokenData: { e },
+      });
     });
   } catch (error) {
     console.log(error, "Error while Importing an NFT");
-    res.status(503).send();
+    return ApiResponse.successResponseWithData(res, "Error While Imporitng an NFT", {
+      tokenData: { error },
+    });
+    // res.status(503).send();
   }
 };
 
@@ -634,25 +721,31 @@ params: {
 */
 const getAllNFTsOfUser = async (req, res) => {
   try {
-    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    // const wallet = new ethers.Wallet(pk);
-    // const publicKey = wallet.address;
     const publicKey = req.query.address
-
     const chainData = await getChain(req.query.chainId);
-    const response = await Moralis.EvmApi.nft.getWalletNFTs({
+
+    await Moralis.EvmApi.nft.getWalletNFTs({
       "chain": (chainData.hex).toString(),
       "format": "decimal",
       "mediaItems": true,
       "address": (publicKey).toString()
-    });
-
-    ApiResponse.successResponseWithData(res, "All NFTs rerlated to this account are fetched.", {
-      tokenData: { response },
+    }).then((response: any) => {
+      console.log(response, "Response");
+      return ApiResponse.successResponseWithData(res, "All NFTs related to this account are fetched.", {
+        tokenData: { response },
+      });
+    }).catch((e: any) => {
+      console.log(e, "Error");
+      return ApiResponse.successResponseWithData(res, "Error While Fetching All NFTs of User", {
+        tokenData: { e },
+      });
     });
   } catch (error) {
     console.log(error, "Error while Importing Account");
-    res.status(503).send();
+    return ApiResponse.successResponseWithData(res, "Error While Fetching All NFTs of User", {
+      tokenData: { error },
+    });
+    // res.status(503).send();
   }
 };
 
@@ -668,29 +761,33 @@ params: {
 
 const getSpecificNFTsOfUser = async (req, res) => {
   try {
-    // const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    // const wallet = new ethers.Wallet(pk);
-    // const publicKey = wallet.address;
     const publicKey = req.query.address
-
     const chainData = await getChain(req.query.chainId);
     let tokens: Array<string> = []
     tokens = req.query.tokenAddresses.split(',');
 
-    const response = await Moralis.EvmApi.nft.getWalletNFTs({
+    await Moralis.EvmApi.nft.getWalletNFTs({
       "chain": (chainData.hex).toString(),
       "format": "decimal",
       "tokenAddresses": tokens,
       "mediaItems": true,
       "address": publicKey.toString()
-    });
-
-    ApiResponse.successResponseWithData(res, "All NFTs related to this account are fetched.", {
-      tokenData: { response },
+    }).then(async (response: any) => {
+      console.log(response, "Reponse fetching Specific NFTs of user");
+      return ApiResponse.successResponseWithData(res, "All NFTs related to this account are fetched.", {
+        tokenData: { response },
+      });
+    }).catch((e: any) => {
+      return ApiResponse.successResponseWithData(res, "Error whiole Fetching Specific NFTs.", {
+        tokenData: { e },
+      });
     });
   } catch (error) {
     console.log(error, "Error while Importing Account");
-    res.status(503).send();
+    return ApiResponse.successResponseWithData(res, "Error whiole Fetching Specific NFTs.", {
+      tokenData: { error },
+    });
+    // res.status(503).send();
   }
 };
 
@@ -708,21 +805,34 @@ const fetchTokenTransfers = async (req, res) => {
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
-    const response = await Moralis.EvmApi.token.getWalletTokenTransfers({
+    await Moralis.EvmApi.token.getWalletTokenTransfers({
       chain: hex.toString(),
       address: (req.query.account).toString(),
+    }).then((response: any) => {
+      console.log(response, "response")
+      return ApiResponse.successResponseWithData(
+        res,
+        "Transactions for ERC20 Tokens fetched successfully",
+        { TransactionHistory: response }
+      );
+    }).catch((e: any) => {
+      return ApiResponse.successResponseWithData(
+        res,
+        "Error while Fetching Token Transactions",
+        { TransactionHistory: e }
+      );
     });
-    ApiResponse.successResponseWithData(
-      res,
-      "Transactions for ERC20 Tokens fetched successfully",
-      { TransactionHistory: response }
-    );
   } catch (error) {
     console.log(error, "Error while Fetching transactions for ERC20 Tokens");
-    res.status(503).json({
-      error,
-      message: error.message
-    });
+    return ApiResponse.successResponseWithData(
+      res,
+      "Error while Fetching Token Transactions",
+      { TransactionHistory: error }
+    );
+    // res.status(503).json({
+    //   error,
+    //   message: error.message
+    // });
   }
 }
 /*
@@ -738,24 +848,37 @@ const fetchNFTTransfers = async (req, res) => {
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
-    const response = await Moralis.EvmApi.nft.getWalletNFTTransfers({
+    await Moralis.EvmApi.nft.getWalletNFTTransfers({
       "chain": hex.toString(),
       "format": "decimal",
       "direction": "both",
       "address": (req.query.account).toString()
+    }).then((response: any) => {
+      console.log(response, "response");
+      return ApiResponse.successResponseWithData(
+        res,
+        "Transactions for NFTs fetched successfully",
+        { TransactionHistory: response }
+      );
+    }).catch((e: any) => {
+      console.log(e, "Error While Fetching NFT Transactions");
+      return ApiResponse.successResponseWithData(
+        res,
+        "Error While Fetching NFT Transactions",
+        { TransactionHistory: e }
+      );
     });
-
-    ApiResponse.successResponseWithData(
-      res,
-      "Transactions for NFTs fetched successfully",
-      { TransactionHistory: response }
-    );
   } catch (error) {
     console.log(error, "Error while Fetching transactions for NFTs");
-    res.status(503).json({
-      error,
-      message: error.message
-    });
+    return ApiResponse.successResponseWithData(
+      res,
+      "Error While Fetching NFT Transactions",
+      { TransactionHistory: error }
+    );
+    // res.status(503).json({
+    //   error,
+    //   message: error.message
+    // });
   }
 }
 
@@ -771,57 +894,66 @@ const fetchAllMixedTransactions = async (req, res) => {
   try {
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
-
     const allTransactions = [];
 
-    const nftResponse = await Moralis.EvmApi.nft.getWalletNFTTransfers({
+    await Moralis.EvmApi.nft.getWalletNFTTransfers({
       "chain": hex.toString(),
       "format": "decimal",
       "direction": "both",
       "address": (req.query.account).toString()
+    }).then(async (nftResponse: any) => {
+      const tokenResponse = await Moralis.EvmApi.token.getWalletTokenTransfers({
+        chain: hex.toString(),
+        address: (req.query.account).toString(),
+      });
+      const nativeResponse = await Moralis.EvmApi.transaction.getWalletTransactions({
+        chain: hex.toString(),
+        address: (req.query.account).toString(),
+      });
+      let count = 0;
+      nftResponse.result.map((data) => {
+        allTransactions.push(data)
+        count += 1
+      })
+      tokenResponse.result.map((data) => {
+        allTransactions.push(data)
+        count += 1
+      })
+      nativeResponse.result.map((data) => {
+        allTransactions.push(data)
+        count += 1
+      })
+      allTransactions.sort(function (x, y) {
+        return y.blockTimestamp - x.blockTimestamp;
+      })
+      console.log(count, "All Transactions");
+      return ApiResponse.successResponseWithData(
+        res,
+        "All Transactions",
+        { TransactionHistory: allTransactions }
+      );
+    }).catch((e: any) => {
+      return ApiResponse.successResponseWithData(
+        res,
+        "Error While Fetching All Transactions",
+        { TransactionHistory: e }
+      );
     });
-
-    const tokenResponse = await Moralis.EvmApi.token.getWalletTokenTransfers({
-      chain: hex.toString(),
-      address: (req.query.account).toString(),
-    });
-
-    const nativeResponse = await Moralis.EvmApi.transaction.getWalletTransactions({
-      chain: hex.toString(),
-      address: (req.query.account).toString(),
-    });
-
-    let count = 0;
-    nftResponse.result.map((data) => {
-      allTransactions.push(data)
-      count += 1
-    })
-    tokenResponse.result.map((data) => {
-      allTransactions.push(data)
-      count += 1
-    })
-    nativeResponse.result.map((data) => {
-      allTransactions.push(data)
-      count += 1
-    })
-
-    allTransactions.sort(function (x, y) {
-      return y.blockTimestamp - x.blockTimestamp;
-    })
-
-    console.log(count, "Response");
-
-    ApiResponse.successResponseWithData(
-      res,
-      "All Transactions",
-      { TransactionHistory: allTransactions }
-    );
   } catch (error) {
     console.log(error, "Error while Fetching transactions for NFTs");
-    res.status(503).json({
-      error,
-      message: error.message
-    });
+    // ApiResponse.ErrorResponse(
+    //   transactionError,
+    //   "Error in fetching transactions",
+    // );
+    return ApiResponse.successResponseWithData(
+      res,
+      "Error While Fetching All Transactions",
+      { TransactionHistory: error }
+    );
+    // res.status(503).json({
+    //   error,
+    //   message: error.message
+    // });
   }
 }
 
@@ -850,16 +982,22 @@ const signTransaction = async (req, res) => {
       convertedABI.abi,
       signer
     )
-
-    const transactionResponse = await contract[functionName](...allParams);
-    console.log(await transactionResponse, "transaction confirmation")
-
-    ApiResponse.successResponseWithData(res, "transaction processed!", {
-      transactionSuccess: { transactionResponse },
+    contract[functionName](...allParams).then(async (response: any) => {
+      console.log(await response, "transaction confirmation")
+      return ApiResponse.successResponseWithData(res, "transaction processed!", {
+        transactionSuccess: { response },
+      });
+    }).catch((e: any) => {
+      return ApiResponse.successResponseWithData(res, "error while Performing the Transactions!", {
+        transactionSuccess: { e },
+      });
     });
   } catch (error) {
     console.log(error, "Error while fetching signer");
-    res.status(503).send();
+    return ApiResponse.successResponseWithData(res, "error while Performing the Transactions!", {
+      transactionSuccess: { error },
+    });
+    // res.status(503).send();
   }
 };
 
@@ -935,14 +1073,19 @@ const getGasFees = async (req, res) => {
       console.log(gasPrice, gasFees, gasFeesInEther, "gasPrice,gasFees,gasFeesInEther");
     } catch (error) {
       console.error('Error:', error);
+      return ApiResponse.successResponseWithData(res, "Error while Fetching the GasFees", {
+        transactionSuccess: { error },
+      });
     }
-
-    ApiResponse.successResponseWithData(res, "gasFees Fetched", {
+    return ApiResponse.successResponseWithData(res, "gasFees Fetched", {
       transactionSuccess: { GasPrice: gasPrice, GasFees: gasFees, GasFeesInEther: gasFeesInEther },
     });
   } catch (error) {
     console.log(error, "Error while fetching signer");
-    res.status(503).send();
+    return ApiResponse.successResponseWithData(res, "Error while Fetching the GasFees", {
+      transactionSuccess: { error },
+    });
+    // res.status(503).send();
   }
 };
 
@@ -967,7 +1110,7 @@ const sendNFT = async (req, res) => {
     const walletSigner = wallet.connect(_provider);
     const publicKey = wallet.address;
     let errors = "No Errors!"
-    console.log("_+_+__+_++_+_", req.query.receiver_address, publicKey, req.query.contract_address, req.query.nftId, "_+_+__+_++_+_")
+
     try {
       //NFT contract
       const contract = new ethers.Contract(
@@ -990,7 +1133,7 @@ const sendNFT = async (req, res) => {
             console.log(transferResult, "NFT sending response");
             ApiResponse.successResponseWithData(
               res,
-              `NFT of Collection "${collectionName}" with Id ${(req.query.tokenId).toString()} sent successfully to ${req.query.receiver_address}.`,
+              `sent NFT successfully.`,
               { CustomTokenSend: transferResult, errors }
             );
           })
@@ -1003,11 +1146,22 @@ const sendNFT = async (req, res) => {
       }
     }
     catch (error) {
-      console.log(error, "failed to send!!")
+      console.log(error.reason, "failed to send!!")
+      errors = error.reason
+      ApiResponse.successResponseWithData(
+        res,
+        errors,
+        { CustomTokenSend: errors }
+      );
     }
   } catch (error) {
     console.log(error, "Unknown Error while Sending an NFT");
-    res.status(503).send();
+    ApiResponse.successResponseWithData(
+      res,
+      error,
+      { CustomTokenSend: error }
+    );
+    // res.status(503).send();
   }
 };
 
