@@ -891,7 +891,6 @@ const fetchNFTTransfers = async (req, res) => {
   }
 */
 const fetchAllMixedTransactions = async (req, res) => {
-  let transactionError: any;
   try {
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
@@ -942,7 +941,6 @@ const fetchAllMixedTransactions = async (req, res) => {
     });
   } catch (error) {
     console.log(error, "Error while Fetching transactions for NFTs");
-    transactionError = error
     // ApiResponse.ErrorResponse(
     //   transactionError,
     //   "Error in fetching transactions",
