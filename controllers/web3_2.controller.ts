@@ -76,7 +76,7 @@ const transactionHistory = async (req, res) => {
       }
 */
 
-const customTokenWalletBalance = async (req, res) => {
+const etherBalance = async (req, res) => {
   try {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     console.log(pk, "pk")
@@ -116,7 +116,7 @@ const customTokenWalletBalance = async (req, res) => {
       }
 */
 
-const nativeTokenWalletBalance = async (req, res) => {
+const napaTokenBalance = async (req, res) => {
   try {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const wallet = new ethers.Wallet(pk);
@@ -124,13 +124,13 @@ const nativeTokenWalletBalance = async (req, res) => {
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
-    // fetching balance for all tokens. 
-    let tokens: Array<string> = []
-    tokens = req.query.tokenAddresses.split(',');
+    // const tokenAddress:string[] = [process.env.CONTRACT_ADDRESS];
+    const napaTokenAddress = process.env.CONTRACT_ADDRESS;
+    console.log(napaTokenAddress,"napaTokenAddress")
 
     await Moralis.EvmApi.token.getWalletTokenBalances({
       "chain": hex,
-      "tokenAddresses": tokens,
+      "tokenAddresses": [process.env.CONTRACT_ADDRESS],
       "address": (publicKey).toString()
     }).then((response: any) => {
       return ApiResponse.successResponseWithData(
@@ -156,7 +156,7 @@ const nativeTokenWalletBalance = async (req, res) => {
   }
 };
 
-const otherTokenWalletBalance = async (req, res) => {
+const otherTokenBalance = async (req, res) => {
   try {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const wallet = new ethers.Wallet(pk);
@@ -1167,9 +1167,9 @@ const sendNFT = async (req, res) => {
 
 module.exports = {
   transactionHistory,
-  nativeTokenWalletBalance,
-  customTokenWalletBalance,
-  otherTokenWalletBalance,
+  napaTokenBalance,
+  etherBalance,
+  otherTokenBalance,
   createWallet,
   sendNativeToken,
   sendCustomToken,
