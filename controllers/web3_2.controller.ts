@@ -94,7 +94,7 @@ const customTokenWalletBalance = async (req, res) => {
         `Balance of ${response}`
       );
       return ApiResponse.successResponseWithData(res, "Native Balance fetched successfully", {
-        NativeTokenWalletBalance: response,
+        CustomTokenWalletBalance: response,
       });
     }).catch((e: any) => {
       console.log(e, "Error while fetching Native Token Balance");
@@ -136,7 +136,7 @@ const nativeTokenWalletBalance = async (req, res) => {
       return ApiResponse.successResponseWithData(
         res,
         "Balance fetched for Custom Tokens successfully",
-        { CustomTokenWalletBalance: response }
+        { NativeTokenWalletBalance: response }
       );
     }).catch((e: any) => {
       console.log(e, "In Catch");
@@ -176,7 +176,7 @@ const otherTokenWalletBalance = async (req, res) => {
       return ApiResponse.successResponseWithData(
         res,
         "Balance fetched for Custom Tokens successfully",
-        { CustomTokenWalletBalance: response }
+        { OtherTokenWalletBalance: response }
       );
     }).catch((e: any) => {
       console.log(e)
