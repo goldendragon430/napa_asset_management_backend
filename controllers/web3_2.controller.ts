@@ -52,6 +52,7 @@ const transactionHistory = async (req, res) => {
         { TransactionHistory: response }
       );
     }).catch((e: any) => {
+      console.log(e)
       return ApiResponse.ErrorResponse(
         res,
         "Error while fetching Transactions"
@@ -75,9 +76,10 @@ const transactionHistory = async (req, res) => {
       }
 */
 
-const nativeTokenWalletBalance = async (req, res) => {
+const customTokenWalletBalance = async (req, res) => {
   try {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    console.log(pk, "pk")
     const wallet = new ethers.Wallet(pk);
     const publicKey = wallet.address;
     const chainData = await getChain(req.query.chainId);
@@ -114,7 +116,7 @@ const nativeTokenWalletBalance = async (req, res) => {
       }
 */
 
-const customTokenWalletBalance = async (req, res) => {
+const nativeTokenWalletBalance = async (req, res) => {
   try {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const wallet = new ethers.Wallet(pk);
@@ -137,6 +139,47 @@ const customTokenWalletBalance = async (req, res) => {
         { CustomTokenWalletBalance: response }
       );
     }).catch((e: any) => {
+      console.log(e, "In Catch");
+      return ApiResponse.ErrorResponse(
+        res,
+        "Some Error from Moralis While Fetching Custom Token Balance"
+      );
+    });
+
+  } catch (error) {
+    console.log("Some Unexpected Error While Fetching Custom Token Balance, Check All Params");
+    return ApiResponse.ErrorResponse(
+      res,
+      "Some Unexpected Error While Fetching Custom Token Balance, Check All Params"
+    );
+    // res.status(503).send();
+  }
+};
+
+const otherTokenWalletBalance = async (req, res) => {
+  try {
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const wallet = new ethers.Wallet(pk);
+    const publicKey = wallet.address;
+    const chainData = await getChain(req.query.chainId);
+    const hex = String(chainData?.hex);
+
+    // fetching balance for all tokens. 
+    let tokens: Array<string> = []
+    tokens = req.query.tokenAddresses.split(',');
+
+    await Moralis.EvmApi.token.getWalletTokenBalances({
+      "chain": hex,
+      "tokenAddresses": tokens,
+      "address": (publicKey).toString()
+    }).then((response: any) => {
+      return ApiResponse.successResponseWithData(
+        res,
+        "Balance fetched for Custom Tokens successfully",
+        { CustomTokenWalletBalance: response }
+      );
+    }).catch((e: any) => {
+      console.log(e)
       return ApiResponse.ErrorResponse(
         res,
         "Error while Fetching Custom Balance"
@@ -241,7 +284,7 @@ const sendNativeToken = async (req, res) => {
           return ApiResponse.ErrorResponse(
             res,
             "Error while Fetching gasPrice"
-            );
+          );
         })
       } else {
         return ApiResponse.ErrorResponse(
@@ -361,6 +404,7 @@ const importTokens = async (req, res) => {
         tokenData: { response },
       });
     }).catch((e: any) => {
+      console.log(e)
       return ApiResponse.ErrorResponse(res, "Error While Importing Tokens");
     });
   } catch (error) {
@@ -474,6 +518,7 @@ const importNFTs = async (req, res) => {
         tokenData: { response },
       });
     }).catch((e: any) => {
+      console.log(e)
       return ApiResponse.ErrorResponse(res, "Error While Imporitng an NFT");
     });
   } catch (error) {
@@ -749,6 +794,7 @@ const getSpecificNFTsOfUser = async (req, res) => {
         tokenData: { response },
       });
     }).catch((e: any) => {
+      console.log(e)
       return ApiResponse.ErrorResponse(res, "Error whiole Fetching Specific NFTs.");
     });
   } catch (error) {
@@ -783,6 +829,7 @@ const fetchTokenTransfers = async (req, res) => {
         { TransactionHistory: response }
       );
     }).catch((e: any) => {
+      console.log(e)
       return ApiResponse.ErrorResponse(
         res,
         "Error while Fetching Token Transactions"
@@ -896,6 +943,7 @@ const fetchAllMixedTransactions = async (req, res) => {
         { TransactionHistory: allTransactions }
       );
     }).catch((e: any) => {
+      console.log(e)
       return ApiResponse.ErrorResponse(
         res,
         "Error While Fetching All Transactions"
@@ -949,6 +997,7 @@ const signTransaction = async (req, res) => {
         transactionSuccess: { response },
       });
     }).catch((e: any) => {
+      console.log(e)
       return ApiResponse.ErrorResponse(res, "error while Performing the Transactions!");
     });
   } catch (error) {
@@ -1120,6 +1169,7 @@ module.exports = {
   transactionHistory,
   nativeTokenWalletBalance,
   customTokenWalletBalance,
+  otherTokenWalletBalance,
   createWallet,
   sendNativeToken,
   sendCustomToken,
