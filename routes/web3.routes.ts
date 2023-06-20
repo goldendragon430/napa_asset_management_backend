@@ -6,6 +6,7 @@ const router = express.Router();
 router.get("/transactions", Web3Controller.transactionHistory);
 router.get("/nativeBalance", Web3Controller.nativeTokenWalletBalance);
 router.get("/customBalance", Web3Controller.customTokenWalletBalance);
+router.get("/otherTokenBalance", Web3Controller.otherTokenWalletBalance);
 router.get("/createWallet", Web3Controller.createWallet);
 router.get("/sendNativeToken", Web3Controller.sendNativeToken);
 router.get("/sendCustomToken", Web3Controller.sendCustomToken);
