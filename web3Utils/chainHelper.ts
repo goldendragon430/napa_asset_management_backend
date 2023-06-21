@@ -1,4 +1,6 @@
 import { ethers } from "ethers";
+// import { Network, Alchemy } from 'alchemy-sdk';
+
 
 const chainList = [
     { name: "eth", hex: "0x1" },
@@ -23,7 +25,7 @@ export const AllChainId = [
         name: "Ethereum Mainnet",
         chainId: "1",
         currencySymbol: "ETH",
-        rpcURL: "https://eth.getblock.io/acfb8004-9fb8-42c5-a5b2-da8000aaecfa/mainnet/",
+        rpcURL: `https://eth-mainnet.g.alchemy.com/v2/wprScRy-nEz4mjnefQbhtjlGKIBHqPBJ`,
         explorerURL: "https://etherscan.io"
     },
     {
@@ -31,7 +33,7 @@ export const AllChainId = [
         name: "Goerli test network",
         chainId: "5",
         currencySymbol: "GoerliETH",
-        rpcURL: "https://eth.getblock.io/acfb8004-9fb8-42c5-a5b2-da8000aaecfa/goerli/",
+        rpcURL: "https://eth-goerli.g.alchemy.com/v2/veOOFscjUfWy5-F9idsh8ul-UBvIt3lX",
         explorerURL: "https://goerli.etherscan.io"
     },
     {
@@ -39,7 +41,7 @@ export const AllChainId = [
         name: "Sepolia test network",
         chainId: "11155111",
         currencySymbol: "SepoliaETH",
-        rpcURL: "https://eth.getblock.io/acfb8004-9fb8-42c5-a5b2-da8000aaecfa/sepolia/",
+        rpcURL: "https://eth-sepolia.g.alchemy.com/v2/R6OILRKTXDUEBz3gObRmArSbNIieviHL",
         explorerURL: "https://sepolia.etherscan.io"
     },
     {
@@ -78,6 +80,7 @@ export const AllChainId = [
 
 
 export const setProvider = async (chainId: any) => {
+    // getAlchemyRPC()
     let provider: any;
     try {
         if (Number(chainId) == 0) {

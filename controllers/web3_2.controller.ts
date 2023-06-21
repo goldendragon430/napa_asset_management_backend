@@ -126,7 +126,7 @@ const napaTokenBalance = async (req, res) => {
 
     // const tokenAddress:string[] = [process.env.CONTRACT_ADDRESS];
     const napaTokenAddress = process.env.CONTRACT_ADDRESS;
-    console.log(napaTokenAddress,"napaTokenAddress")
+    console.log(napaTokenAddress, "napaTokenAddress")
 
     await Moralis.EvmApi.token.getWalletTokenBalances({
       "chain": hex,
@@ -1051,14 +1051,22 @@ const getGasFees = async (req, res) => {
   try {
     //getting signer
     const pk = await getPrivateKeyByProfileId(req.body.params.callData.profileId);
-    const _provider = await setProvider(2);
+    const _provider = await setProvider(req.body.params.callData.chainId);
     const wallet = new ethers.Wallet((pk).toString());
     const signer = wallet.connect(_provider);
-    //
-    const convertedABI = JSON.parse(req.body.params.callData.abi);
-    const convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
-    const functionName = JSON.parse(req.body.params.callData.funcionName);
-    const allParams = JSON.parse(req.body.params.callData.allParams);
+    let convertedABI, convertedContractAddress, functionName, allParams;
+    try {
+      convertedABI = JSON.parse(req.body.params.callData.abi);
+      convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
+      functionName = JSON.parse(req.body.params.callData.funcionName);
+      allParams = JSON.parse(req.body.params.callData.allParams);
+    } catch {
+      convertedABI = req.body.params.callData.abi;
+      convertedContractAddress = req.body.params.callData.contractAddress;
+      functionName = req.body.params.callData.funcionName;
+      allParams = req.body.params.callData.allParams;
+    }
+
 
     console.log(convertedContractAddress, allParams, functionName, ".......params......");
 
