@@ -329,6 +329,9 @@ const sendCustomToken = async (req, res) => {
     const walletSigner = wallet.connect(_provider);
     const publicKey = wallet.address;
 
+    console.log(pk,"PK");
+    console.log(publicKey,"publicKey");
+
     try {
       const contract = new ethers.Contract(
         (req.query.contract_address).toString(),
@@ -359,7 +362,7 @@ const sendCustomToken = async (req, res) => {
         console.log("Insufficient Balance");
         return ApiResponse.ErrorResponse(
           res,
-          "Error While Sending Custom Tokens."
+          "You Have Insufficient Ether Balance to send Tokens."
         );
       }
     }
@@ -973,18 +976,26 @@ const fetchAllMixedTransactions = async (req, res) => {
 
 const signTransaction = async (req, res) => {
   try {
-    //getting signer
-    const pk = await getPrivateKeyByProfileId(req.query.profileId);
-    const _provider = await setProvider(req.query.chainId);
+    const pk = await getPrivateKeyByProfileId(req.body.params.callData.profileId);
+    const _provider = await setProvider(req.body.params.callData.chainId);
     const wallet = new ethers.Wallet((pk).toString());
     const signer = wallet.connect(_provider);
-    //
-    const convertedABI = JSON.parse(req.body.params.callData.abi);
-    const convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
-    const functionName = JSON.parse(req.body.params.callData.funcionName);
-    const allParams = JSON.parse(req.body.params.callData.allParams);
+    const publicKey = wallet.address;
 
-    console.log(convertedContractAddress, allParams, functionName, ".......params......");
+    let convertedABI, convertedContractAddress, functionName, allParams;
+    try {
+      convertedABI = JSON.parse(req.body.params.callData.abi);
+      convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
+      functionName = JSON.parse(req.body.params.callData.funcionName);
+      allParams = JSON.parse(req.body.params.callData.allParams);
+    } catch {
+      convertedABI = req.body.params.callData.abi;
+      convertedContractAddress = req.body.params.callData.contractAddress;
+      functionName = req.body.params.callData.funcionName;
+      allParams = req.body.params.callData.allParams;
+    }
+
+    // console.log(convertedContractAddress, allParams, functionName, ".......params......");
 
     const contract = new ethers.Contract(
       (convertedContractAddress).toString(),
@@ -992,7 +1003,7 @@ const signTransaction = async (req, res) => {
       signer
     )
     contract[functionName](...allParams).then(async (response: any) => {
-      console.log(await response, "transaction confirmation")
+      console.log(await response.wait(), "transaction confirmation")
       return ApiResponse.successResponseWithData(res, "transaction processed!", {
         transactionSuccess: { response },
       });
