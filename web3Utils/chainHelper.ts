@@ -3,7 +3,7 @@ import axios from "axios";
 import Moralis from "moralis";
 
 const getWorkingUrl = async (chainId: number) => {
-    let workingURL = {
+    const workingURL = {
         totatURLs: 0,
         urls: []
     };

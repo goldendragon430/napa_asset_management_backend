@@ -38,6 +38,29 @@ import { add, remove } from "../utils/streams";
   }
 */
 
+const nativeBalance = async (chainId: string, wallet_address: string) => {
+  let response: any;
+  const chainData = await getChain(chainId);
+  const hex = String(chainData?.hex);
+  try {
+    await Moralis.EvmApi.balance.getNativeBalance({
+      "chain": hex.toString(),
+      "address": wallet_address.toString()
+    }).then(async (res: any) => {
+      console.log(
+        `Balance of ${res.jsonResponse.balance}`
+      );
+      response = await res.jsonResponse.balance;
+    }).catch(async (e: any) => {
+      console.log(e, "Error while fetching Native Token Balance");
+      response = await e;
+    });
+  } catch (e: any) {
+    response = await e;
+  }
+  return response;
+}
+
 const transactionHistory = async (req, res) => {
   try {
     const chainData = await getChain(req.query.chainId);
@@ -82,27 +105,22 @@ const etherBalance = async (req, res) => {
     console.log(pk, "pk")
     const wallet = new ethers.Wallet(pk);
     const publicKey = wallet.address;
-    const chainData = await getChain(req.query.chainId);
-    const hex = String(chainData?.hex);
-
-    await Moralis.EvmApi.balance.getNativeBalance({
-      "chain": hex.toString(),
-      "address": publicKey.toString()
-    }).then((response: any) => {
-      console.log(
-        response,
-        `Balance of ${response}`
-      );
-      return ApiResponse.successResponseWithData(res, "Native Balance fetched successfully", {
-        CustomTokenWalletBalance: response,
-      });
+    console.log(publicKey, "Wallet Address");
+    nativeBalance(req.query.chainId.toString(), publicKey.toString()).then((response: any) => {
+      console.log(response, "ether Balance")
+      if (Number(response) > 0) {
+        return ApiResponse.successResponseWithData(res, "Native Balance fetched successfully", {
+          CustomTokenWalletBalance: response,
+        });
+      } else {
+        return ApiResponse.ErrorResponse(res, "Low/Zero Ether Balance");
+      }
     }).catch((e: any) => {
-      console.log(e, "Error while fetching Native Token Balance");
-      return ApiResponse.ErrorResponse(res, "Error while fetching Native Token Balance");
-    });
-  } catch (e: any) {
-    return ApiResponse.ErrorResponse(res, "Error while fetching Native Token Balance");
-    // res.status(503).send();
+      console.log(e, "1 Error while Fetching Ether Balance");
+      return ApiResponse.ErrorResponse(res, "1 Error while Fetching Ether Balance");
+    })
+  } catch (e) {
+    return ApiResponse.ErrorResponse(res, "2 Error while Fetching Ether Balance");
   }
 };
 
@@ -121,6 +139,7 @@ const napaTokenBalance = async (req, res) => {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const wallet = new ethers.Wallet(pk);
     const publicKey = wallet.address;
+    console.log(publicKey, "Wallet Address")
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
@@ -161,6 +180,7 @@ const otherTokenBalance = async (req, res) => {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const wallet = new ethers.Wallet(pk);
     const publicKey = wallet.address;
+    console.log(publicKey, "Wallet Address")
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
@@ -242,10 +262,12 @@ const sendNativeToken = async (req, res) => {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const _wallet = new ethers.Wallet(pk);
     const publicKey = _wallet.address;
+    console.log(publicKey, "Wallet Address")
 
     const wallet = new ethers.Wallet((pk).toString());
     const _provider = await setProvider(req.query.chainId);
     const walletSigner = wallet.connect(_provider);
+    const etherBalance = await nativeBalance(req.query.chainId.toString(), publicKey.toString());
 
     const balance = await (_provider.getBalance(publicKey));
     console.log(Number((balance).toString()) / (10 ** 18), "balance");
@@ -253,30 +275,39 @@ const sendNativeToken = async (req, res) => {
       if (Number(balance) / (10 ** 18) > Number(req.query.amount)) {
         _provider.getGasPrice().then(async (currentGasPrice: any) => {
           const gas_price = ethers.utils.hexlify((currentGasPrice));
-          const gas_limit: any = 100000;
-          const tx = {
-            from: publicKey,
-            to: req.query.receiver_address,
-            value: ethers.utils.parseEther(req.query.amount),
-            nonce: _provider.getTransactionCount(
-              publicKey,
-              "latest"
-            ),
-            gasLimit: ethers.utils.hexlify(gas_limit), // 100000
-            gasPrice: gas_price,
-          }
-          try {
-            const response: any = await walletSigner.sendTransaction(tx)
-            return ApiResponse.successResponseWithData(
-              res,
-              "Native Tokens sent successfully.",
-              { NativeTokenSend: response }
-            );
-          } catch (error) {
-            console.log("failed to send!!");
+          if (etherBalance > ethers.utils.hexlify(gas_price)) {
+            const gas_limit: any = 100000;
+            const tx = {
+              from: publicKey,
+              to: req.query.receiver_address,
+              value: ethers.utils.parseEther(req.query.amount),
+              nonce: _provider.getTransactionCount(
+                publicKey,
+                "latest"
+              ),
+              gasLimit: ethers.utils.hexlify(gas_limit), // 100000
+              gasPrice: gas_price,
+            }
+            try {
+              const response: any = await walletSigner.sendTransaction(tx)
+              return ApiResponse.successResponseWithData(
+                res,
+                "Native Tokens sent successfully.",
+                { NativeTokenSend: response }
+              );
+
+            } catch (error) {
+              console.log("failed to send!!");
+              return ApiResponse.ErrorResponse(
+                res,
+                "failed to send!!"
+              );
+            }
+          } else {
+            console.log("Low Ethers Balance");
             return ApiResponse.ErrorResponse(
               res,
-              "failed to send!!"
+              "Low Ethers Balance"
             );
           }
         }).catch((e: any) => {
@@ -299,6 +330,7 @@ const sendNativeToken = async (req, res) => {
         "couldn't get the provider"
       );
     }
+
   } catch (error) {
     console.log(error, "Unknown Error while Sending Tokens");
     return ApiResponse.ErrorResponse(
@@ -328,49 +360,73 @@ const sendCustomToken = async (req, res) => {
     const _provider = await setProvider(req.query.chainId);
     const walletSigner = wallet.connect(_provider);
     const publicKey = wallet.address;
+    console.log(publicKey, "publicKey");
 
-    console.log(pk,"PK");
-    console.log(publicKey,"publicKey");
+    const etherBalance = await nativeBalance(req.query.chainId.toString(), publicKey.toString());
 
-    try {
-      const contract = new ethers.Contract(
-        (req.query.contract_address).toString(),
-        commonTokenAbi.abi,
-        walletSigner
-      )
-      const numberOfTokens = ethers.utils.parseUnits(req.query.amount, 18)
-      console.log(`numberOfTokens: ${numberOfTokens}`);
-      const balance = await contract.balanceOf(publicKey.toString());
-      console.log(Number(numberOfTokens) <= Number(balance), Number(numberOfTokens), Number(balance), "BAL")
-      if (Number(numberOfTokens) <= Number(balance)) {
-        console.log("Had Enough Balance");
-        // Send tokens
-        contract.transfer((req.query.receiver_address).toString(), (numberOfTokens).toString()).then(async (transferResult: any) => {
-          return ApiResponse.successResponseWithData(
-            res,
-            "Custom Tokens sent successfully.",
-            { Error_While_Sending_Custom_Tokens: transferResult }
-          );
-        }).catch(async (e: any) => {
-          console.log("Error While Sending Custom Tokens.", e.error.reason);
+    const numberOfTokens = ethers.utils.parseUnits(req.query.amount, 18)
+    const contract = new ethers.Contract(
+      (req.query.contract_address).toString(),
+      commonTokenAbi.abi,
+      walletSigner
+    )
+    let gasFees;
+
+    await contract.estimateGas.transfer((req.query.receiver_address).toString(), (numberOfTokens).toString()).then(async (gasEstimate: any) => {
+      const gasPrice = await walletSigner.getGasPrice();
+      gasFees = gasEstimate.mul(gasPrice);
+      const gasFeesInEther = ethers.utils.formatEther(gasFees);
+      console.log((gasPrice).toString(), (gasFees).toString(), gasFeesInEther, etherBalance, "gasPrice,gasFees,gasFeesInEther");
+    }).catch((e: any) => {
+      console.log("Error While Estimating Gas Price for sending NFT", e);
+    });
+
+    if (Number(etherBalance) > Number((gasFees).toString())) {
+      try {
+        const contract = new ethers.Contract(
+          (req.query.contract_address).toString(),
+          commonTokenAbi.abi,
+          walletSigner
+        )
+        console.log(`numberOfTokens: ${numberOfTokens}`);
+        const balance = await contract.balanceOf(publicKey.toString());
+        console.log(Number(numberOfTokens) <= Number(balance), Number(numberOfTokens), Number(balance), "BAL")
+        if (Number(numberOfTokens) <= Number(balance)) {
+          console.log("Had Enough Balance");
+          // Send tokens
+          contract.transfer((req.query.receiver_address).toString(), (numberOfTokens).toString()).then(async (transferResult: any) => {
+            return ApiResponse.successResponseWithData(
+              res,
+              "Custom Tokens sent successfully.",
+              { Error_While_Sending_Custom_Tokens: transferResult }
+            );
+          }).catch(async (e: any) => {
+            console.log("Error While Sending Custom Tokens.", e.error.reason);
+            return ApiResponse.ErrorResponse(
+              res,
+              "Error While Sending Custom Tokens."
+            );
+          })
+        } else {
+          console.log("Insufficient Balance");
           return ApiResponse.ErrorResponse(
             res,
-            "Error While Sending Custom Tokens."
+            "You Have Insufficient Ether Balance to send Tokens."
           );
-        })
-      } else {
-        console.log("Insufficient Balance");
+        }
+      }
+      catch (error) {
+        console.log("failed to send!!");
         return ApiResponse.ErrorResponse(
           res,
-          "You Have Insufficient Ether Balance to send Tokens."
+          "Error While Sending Custom Tokens."
         );
       }
-    }
-    catch (error) {
-      console.log("failed to send!!");
+    } else {
+      console.log("Low Ethers Balance");
       return ApiResponse.ErrorResponse(
         res,
-        "Error While Sending Custom Tokens."
+        "Low Ethers Balance"
       );
     }
   } catch (error) {
@@ -493,6 +549,7 @@ const importNFTs = async (req, res) => {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const _wallet = new ethers.Wallet(pk);
     const publicKey = _wallet.address;
+    console.log(publicKey, "Wallet Address")
     const chainData = await getChain(req.query.chainId);
 
     const contractAddress = (req.query.contract).toString();
@@ -547,91 +604,100 @@ const stakeNapaTokens = async (req, res) => {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const _wallet = new ethers.Wallet(pk);
     const publicKey = _wallet.address;
+    console.log(publicKey, "Wallet Address")
+    const etherBalance = await nativeBalance(req.query.chainId.toString(), publicKey.toString());
 
-    let error;
-    let approvalResponse;
-    let stakeResponse;
-    const decimals = 10 ** 18;
-    const amtInWei = req.query.amount * decimals;
 
-    const wallet = new ethers.Wallet((pk).toString());
-    const _provider = await setProvider(req.query.chainId);
-    const walletSigner = wallet.connect(_provider);
+    if (etherBalance > 0) {
+      let error;
+      let approvalResponse;
+      let stakeResponse;
+      const decimals = 10 ** 18;
+      const amtInWei = req.query.amount * decimals;
 
-    const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
-    const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
+      const wallet = new ethers.Wallet((pk).toString());
+      const _provider = await setProvider(req.query.chainId);
+      const walletSigner = wallet.connect(_provider);
 
-    const userDeposit = await napaStakeCtr.UserPlanDetails((publicKey).toString(), (req.query.plan).toString());
-    const userStakedAmt = userDeposit[1].toString();
+      const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
+      const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
 
-    if (userStakedAmt > 0) {
-      error = "Already staked for this plan";
-    }
-    else {
-      let isCorrectPlan = false;
-      if (Number(req.query.plan) === 30 || Number(req.query.plan) === 60 || Number(req.query.plan) === 90 || Number(req.query.plan) === 120) {
-        isCorrectPlan = true;
-      } else {
-        isCorrectPlan = false;
+      const userDeposit = await napaStakeCtr.UserPlanDetails((publicKey).toString(), (req.query.plan).toString());
+      const userStakedAmt = userDeposit[1].toString();
+
+      if (userStakedAmt > 0) {
+        error = "Already staked for this plan";
       }
-
-      const userBal: number = await napaTokenCtr.balanceOf((publicKey).toString());
-
-      if ((await userBal / decimals) > req.query.amount && await userBal > 0 && userStakedAmt <= 0 && Number(req.query.amount) > 0 && isCorrectPlan) {
-        await napaTokenCtr.approve(originalNapaStakingAddress, amtInWei.toString()).then(async (res) => {
-          approvalResponse = await res.wait();
-
-          if (req.query.plan == 30) {
-            await napaStakeCtr.stakeTokens(amtInWei.toString(), 30).then(async (res: any) => {
-              stakeResponse = await res.wait();
-            }).catch((e: any) => {
-              error = e + "Error while Staking";
-            })
-          }
-          else if (req.query.plan == 60) {
-            await napaStakeCtr.stakeTokens(amtInWei.toString(), 60).then(async (res: any) => {
-              stakeResponse = await res.wait();
-            }).catch((e: any) => {
-              error = e + "Error while Staking";
-            })
-          }
-          else if (req.query.plan == 90) {
-            await napaStakeCtr.stakeTokens(amtInWei.toString(), 90).then(async (res: any) => {
-              stakeResponse = await res.wait();
-            }).catch((e: any) => {
-              error = e + "Error while Staking";
-            })
-          }
-          else if (req.query.plan == 120) {
-            await napaStakeCtr.stakeTokens(amtInWei.toString(), 120).then(async (res: any) => {
-              stakeResponse = await res.wait();
-            }).catch((e: any) => {
-              error = e + "Error while Staking";
-            })
-          }
-        }).catch((e: any) => {
-          error = e + "Error while taking an Approval";
-        });
-      } else {
-        if (Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120) {
-          error = "Selected Wrong Plan,  Choose from (30,60,90 or 120) days";
+      else {
+        let isCorrectPlan = false;
+        if (Number(req.query.plan) === 30 || Number(req.query.plan) === 60 || Number(req.query.plan) === 90 || Number(req.query.plan) === 120) {
+          isCorrectPlan = true;
+        } else {
+          isCorrectPlan = false;
         }
-        if (Number(req.query.amount) <= 0) {
-          error = "please enter some amount";
-        }
-        if (userStakedAmt > 0) {
-          error = `you already have ${userStakedAmt / decimals} token stake`;
-        }
-        if (Number(await userBal / decimals) < Number(req.query.amount) && Number(await userBal) <= 0) {
-          error = `you have ${(await userBal).toString()} tokens which are less to stake! `;
+
+        const userBal: number = await napaTokenCtr.balanceOf((publicKey).toString());
+
+        if ((await userBal / decimals) > req.query.amount && await userBal > 0 && userStakedAmt <= 0 && Number(req.query.amount) > 0 && isCorrectPlan) {
+          await napaTokenCtr.approve(originalNapaStakingAddress, amtInWei.toString()).then(async (res) => {
+            approvalResponse = await res.wait();
+
+            if (req.query.plan == 30) {
+              await napaStakeCtr.stakeTokens(amtInWei.toString(), 30).then(async (res: any) => {
+                stakeResponse = await res.wait();
+              }).catch((e: any) => {
+                error = e + "Error while Staking";
+              })
+            }
+            else if (req.query.plan == 60) {
+              await napaStakeCtr.stakeTokens(amtInWei.toString(), 60).then(async (res: any) => {
+                stakeResponse = await res.wait();
+              }).catch((e: any) => {
+                error = e + "Error while Staking";
+              })
+            }
+            else if (req.query.plan == 90) {
+              await napaStakeCtr.stakeTokens(amtInWei.toString(), 90).then(async (res: any) => {
+                stakeResponse = await res.wait();
+              }).catch((e: any) => {
+                error = e + "Error while Staking";
+              })
+            }
+            else if (req.query.plan == 120) {
+              await napaStakeCtr.stakeTokens(amtInWei.toString(), 120).then(async (res: any) => {
+                stakeResponse = await res.wait();
+              }).catch((e: any) => {
+                error = e + "Error while Staking";
+              })
+            }
+          }).catch((e: any) => {
+            error = e + "Error while taking an Approval";
+          });
+        } else {
+          if (Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120) {
+            error = "Selected Wrong Plan,  Choose from (30,60,90 or 120) days";
+          }
+          if (Number(req.query.amount) <= 0) {
+            error = "please enter some amount";
+          }
+          if (userStakedAmt > 0) {
+            error = `you already have ${userStakedAmt / decimals} token stake`;
+          }
+          if (Number(await userBal / decimals) < Number(req.query.amount) && Number(await userBal) <= 0) {
+            error = `you have ${(await userBal).toString()} tokens which are less to stake! `;
+          }
         }
       }
+      ApiResponse.successResponseWithData(res, "Resposne From Stake.", {
+        stakingResponse: { approvalResponse, stakeResponse, error },
+      });
+    } else {
+      console.log("Low Ethers Balance");
+      return ApiResponse.ErrorResponse(
+        res,
+        "Low Ethers Balance"
+      );
     }
-
-    ApiResponse.successResponseWithData(res, "Resposne From Stake.", {
-      stakingResponse: { approvalResponse, stakeResponse, error },
-    });
-
   } catch (err) {
     console.log(err, "Error while Staking.");
     res.status(503).send();
@@ -655,54 +721,66 @@ const unstakeNapaTokens = async (req, res) => {
     const pk = await getPrivateKeyByProfileId(req.query.profileId);
     const _wallet = new ethers.Wallet(pk);
     const publicKey = _wallet.address;
+    console.log(publicKey, "Wallet Address")
 
-    let error = "No Errors";
-    let currentReward = 0;
-    let unStakeResponse;
-    const decimals = 10 ** 18;
+    const etherBalance = await nativeBalance(req.query.chainId.toString(), publicKey.toString());
+    if (etherBalance > 0) {
 
-    const wallet = new ethers.Wallet((req.query.private_key).toString());
-    const _provider = await setProvider(req.query.chainId);
-    const walletSigner = wallet.connect(_provider);
 
-    const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
+      let error = "No Errors";
+      let currentReward = 0;
+      let unStakeResponse;
+      const decimals = 10 ** 18;
 
-    const _userDeposit = await napaStakeCtr.UserPlanDetails((publicKey).toString(), (req.query.plan).toString());
+      const wallet = new ethers.Wallet((req.query.private_key).toString());
+      const _provider = await setProvider(req.query.chainId);
+      const walletSigner = wallet.connect(_provider);
 
-    if (Number(_userDeposit[1].toString()) > 0) {
-      const rewardsEarned = (Number((await napaStakeCtr.checkReward(req.query.plan)).toString()) / decimals).toFixed(18);
-      console.log("rewards earned ===>", rewardsEarned);
-      currentReward = Number(rewardsEarned);
-    }
+      const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
 
-    const date = new Date(Number((_userDeposit[3].toString()) * 1000));
-    const currentUnix = Math.round(+new Date() / 1000);
+      const _userDeposit = await napaStakeCtr.UserPlanDetails((publicKey).toString(), (req.query.plan).toString());
 
-    if (Number(_userDeposit[1].toString()) <= 0) {
-      console.log("you don't have any tokens staked for this plan yet");
-      error = "you don't have any tokens staked for this plan yet";
-    } else if (Number(_userDeposit[3].toString()) > currentUnix) {
-      console.log(`Tokens are locked, you can't unstake now, wait till ${date}`);
-      error = `Tokens are locked, you can't unstake now, wait till ${date}`
-    } else if (Number(_userDeposit[3].toString()) < Number(currentUnix) && Number(_userDeposit[1].toString()) > 0) {
-      const treasuryToStakeCtrAllowance = await napaStakeCtr.pendingRewards();
-      if (treasuryToStakeCtrAllowance > 0) {
-        await napaStakeCtr.UnstakeTokens(req.query.plan).then(async (res: any) => {
-          console.log("transaction for Unstake is in progress..");
-          unStakeResponse = await res.wait();
-          console.log("transaction for Unstake is complete..");
-        }).catch((e: any) => {
-          console.log(e, "Error while unstake");
-        })
+      if (Number(_userDeposit[1].toString()) > 0) {
+        const rewardsEarned = (Number((await napaStakeCtr.checkReward(req.query.plan)).toString()) / decimals).toFixed(18);
+        console.log("rewards earned ===>", rewardsEarned);
+        currentReward = Number(rewardsEarned);
       }
+
+      const date = new Date(Number((_userDeposit[3].toString()) * 1000));
+      const currentUnix = Math.round(+new Date() / 1000);
+
+      if (Number(_userDeposit[1].toString()) <= 0) {
+        console.log("you don't have any tokens staked for this plan yet");
+        error = "you don't have any tokens staked for this plan yet";
+      } else if (Number(_userDeposit[3].toString()) > currentUnix) {
+        console.log(`Tokens are locked, you can't unstake now, wait till ${date}`);
+        error = `Tokens are locked, you can't unstake now, wait till ${date}`
+      } else if (Number(_userDeposit[3].toString()) < Number(currentUnix) && Number(_userDeposit[1].toString()) > 0) {
+        const treasuryToStakeCtrAllowance = await napaStakeCtr.pendingRewards();
+        if (treasuryToStakeCtrAllowance > 0) {
+          await napaStakeCtr.UnstakeTokens(req.query.plan).then(async (res: any) => {
+            console.log("transaction for Unstake is in progress..");
+            unStakeResponse = await res.wait();
+            console.log("transaction for Unstake is complete..");
+          }).catch((e: any) => {
+            console.log(e, "Error while unstake");
+          })
+        }
+      } else {
+        console.log("Not Enough Pending Rewards: admin hasn't added rewards yet.");
+      }
+
+      ApiResponse.successResponseWithData(res, "Resposne From Stake.", {
+        unStakingResponse: { currentReward, unStakeResponse, error },
+      });
+
     } else {
-      console.log("Not Enough Pending Rewards: admin hasn't added rewards yet.");
+      console.log("Low Ethers Balance");
+      return ApiResponse.ErrorResponse(
+        res,
+        "Low Ethers Balance"
+      );
     }
-
-    ApiResponse.successResponseWithData(res, "Resposne From Stake.", {
-      unStakingResponse: { currentReward, unStakeResponse, error },
-    });
-
   } catch (err) {
     console.log(err, "Error while Staking.");
     res.status(503).send();
@@ -974,13 +1052,14 @@ const fetchAllMixedTransactions = async (req, res) => {
 //1. callData  => (includes all details regardiing the function call) -> will explain later.
 //2. profileId => ("9fd87b56-5394-4724-a140-d48c82ea27a2")
 
-const signTransaction = async (req, res) => {
+const readFunction = async (req, res) => {
   try {
     const pk = await getPrivateKeyByProfileId(req.body.params.callData.profileId);
     const _provider = await setProvider(req.body.params.callData.chainId);
     const wallet = new ethers.Wallet((pk).toString());
     const signer = wallet.connect(_provider);
     const publicKey = wallet.address;
+    console.log(publicKey, "Wallet Address")
 
     let convertedABI, convertedContractAddress, functionName, allParams;
     try {
@@ -995,7 +1074,7 @@ const signTransaction = async (req, res) => {
       allParams = req.body.params.callData.allParams;
     }
 
-    // console.log(convertedContractAddress, allParams, functionName, ".......params......");
+    console.log(convertedContractAddress, allParams, functionName, ".......params......");
 
     const contract = new ethers.Contract(
       (convertedContractAddress).toString(),
@@ -1003,7 +1082,7 @@ const signTransaction = async (req, res) => {
       signer
     )
     contract[functionName](...allParams).then(async (response: any) => {
-      console.log(await response.wait(), "transaction confirmation")
+      console.log(await response, "transaction confirmation")
       return ApiResponse.successResponseWithData(res, "transaction processed!", {
         transactionSuccess: { response },
       });
@@ -1014,6 +1093,78 @@ const signTransaction = async (req, res) => {
   } catch (error) {
     console.log(error, "Error while fetching signer");
     return ApiResponse.ErrorResponse(res, "error while Performing the Transactions!");
+  }
+};
+
+// params: 
+//1. callData  => (includes all details regardiing the function call) -> will explain later.
+//2. profileId => ("9fd87b56-5394-4724-a140-d48c82ea27a2")
+
+const signTransaction = async (req, res) => {
+  try {
+    const pk = await getPrivateKeyByProfileId(req.body.params.callData.profileId);
+    const _provider = await setProvider(req.body.params.callData.chainId);
+    const wallet = new ethers.Wallet((pk).toString());
+    const signer = wallet.connect(_provider);
+    const publicKey = wallet.address;
+    console.log(publicKey, "Wallet Address")
+
+    let convertedABI, convertedContractAddress, functionName, allParams, etherBalance;
+    try {
+      convertedABI = JSON.parse(req.body.params.callData.abi);
+      convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
+      functionName = JSON.parse(req.body.params.callData.funcionName);
+      allParams = JSON.parse(req.body.params.callData.allParams);
+      etherBalance = await nativeBalance(req.body.params.callData.chainId.toString(), publicKey.toString());
+    } catch {
+      convertedABI = req.body.params.callData.abi;
+      convertedContractAddress = req.body.params.callData.contractAddress;
+      functionName = req.body.params.callData.funcionName;
+      allParams = req.body.params.callData.allParams;
+      etherBalance = await nativeBalance(req.body.params.callData.chainId.toString(), publicKey.toString());
+    }
+
+    const contract = new ethers.Contract(
+      (convertedContractAddress).toString(),
+      convertedABI.abi,
+      signer
+    )
+    let gasFees;
+
+    await contract["estimateGas"][functionName](...allParams).then(async (gasEstimate: any) => {
+      const gasPrice = await signer.getGasPrice();
+      gasFees = gasEstimate.mul(gasPrice);
+      const gasFeesInEther = ethers.utils.formatEther(gasFees);
+      console.log((gasPrice).toString(), (gasFees).toString(), gasFeesInEther, etherBalance, "gasPrice,gasFees,gasFeesInEther");
+    }).catch((e: any) => {
+      console.log("Error While Estimating Gas Price for any Transaction", e.error.reason);
+      return ApiResponse.ErrorResponse(res, `Error While Estimating Gas Price for any Transaction, check All Params(contract address, and all related params) CareFully, error: ${e.error.reason}`);
+    });
+
+
+    if (Number(etherBalance) > Number((gasFees).toString())) {
+
+      console.log(convertedContractAddress, allParams, functionName, ".......params......");
+
+      contract[functionName](...allParams).then(async (response: any) => {
+        console.log(await response.wait(), "transaction confirmation")
+        return ApiResponse.successResponseWithData(res, "transaction processed!", {
+          transactionSuccess: { response },
+        });
+      }).catch((e: any) => {
+        console.log(e)
+        return ApiResponse.ErrorResponse(res, "error while Performing the Transactions from Contract!");
+      });
+    } else {
+      console.log("Low Ethers Balance");
+      return ApiResponse.ErrorResponse(
+        res,
+        "Low Ethers Balance"
+      );
+    }
+  } catch (error) {
+    console.log(error, "Error while fetching signer");
+    return ApiResponse.ErrorResponse(res, "error while Performing the Transactions from Params or etc,.!");
     // res.status(503).send();
   }
 };
@@ -1065,6 +1216,9 @@ const getGasFees = async (req, res) => {
     const _provider = await setProvider(req.body.params.callData.chainId);
     const wallet = new ethers.Wallet((pk).toString());
     const signer = wallet.connect(_provider);
+    const publicKey = wallet.address;
+    console.log(publicKey, "Wallet Address")
+
     let convertedABI, convertedContractAddress, functionName, allParams;
     try {
       convertedABI = JSON.parse(req.body.params.callData.abi);
@@ -1077,7 +1231,6 @@ const getGasFees = async (req, res) => {
       functionName = req.body.params.callData.funcionName;
       allParams = req.body.params.callData.allParams;
     }
-
 
     console.log(convertedContractAddress, allParams, functionName, ".......params......");
 
@@ -1130,56 +1283,89 @@ const sendNFT = async (req, res) => {
     const _provider = await setProvider(req.query.chainId);
     const walletSigner = wallet.connect(_provider);
     const publicKey = wallet.address;
-    let errors = "No Errors!"
+    console.log(publicKey, "Wallet Address")
 
-    try {
-      //NFT contract
-      const contract = new ethers.Contract(
-        (req.query.contract_address).toString(),
-        commonNFTAbi.abi,
-        walletSigner
-      )
-      const collectionName = await contract.name();
-      console.log(collectionName, "collectionName");
-      const owner = await contract.ownerOf((req.query.nftId).toString());
-      console.log(owner, "OWNER");
-      if (owner.toString() != (publicKey).toString()) {
-        errors = "You're not the Owner of this NFT";
-      }
-      // Send an NFT
-      if (owner.toString() == (publicKey).toString()) {
-        contract.transferFrom((publicKey).toString()
-          , (req.query.receiver_address).toString()
-          , (req.query.nftId)).then((transferResult: any) => {
-            console.log(transferResult, "NFT sending response");
-            ApiResponse.successResponseWithData(
+    const contract = new ethers.Contract(
+      (req.query.contract_address).toString(),
+      commonNFTAbi.abi,
+      walletSigner
+    )
+
+    const etherBalance = await nativeBalance(req.query.chainId.toString(), publicKey.toString());
+    let gasFees;
+    await contract.estimateGas.transferFrom((publicKey).toString(), (req.query.receiver_address).toString()
+      , (req.query.nftId)).then(async (gasEstimate: any) => {
+        console.log("Gas Price", res);
+
+        const gasPrice = await walletSigner.getGasPrice();
+        gasFees = gasEstimate.mul(gasPrice);
+        const gasFeesInEther = ethers.utils.formatEther(gasFees);
+        console.log((gasPrice).toString(), (gasFees).toString(), gasFeesInEther, etherBalance, "gasPrice,gasFees,gasFeesInEther");
+      }).catch((e: any) => {
+        console.log("Error While Estimating Gas Price for sending NFT", e);
+      });
+
+    if (Number(etherBalance) > Number((gasFees).toString())) {
+      let errors = "No Errors!"
+      const etherBalance = await nativeBalance(req.query.chainId.toString(), publicKey.toString());
+      if (etherBalance > 0) {
+        try {
+          //NFT contract
+
+          const collectionName = await contract.name();
+          console.log(collectionName, "collectionName");
+          const owner = await contract.ownerOf((req.query.nftId).toString());
+          console.log(owner, "OWNER");
+          if (owner.toString() != (publicKey).toString()) {
+            errors = "You're not the Owner of this NFT";
+          }
+          // Send an NFT
+          if (owner.toString() == (publicKey).toString()) {
+            contract.transferFrom((publicKey).toString()
+              , (req.query.receiver_address).toString()
+              , (req.query.nftId)).then((transferResult: any) => {
+                console.log(transferResult, "NFT sending response");
+                ApiResponse.successResponseWithData(
+                  res,
+                  `sent NFT successfully.`,
+                  { CustomTokenSend: transferResult, errors }
+                );
+              })
+          } else {
+            ApiResponse.ErrorResponse(
               res,
-              `sent NFT successfully.`,
-              { CustomTokenSend: transferResult, errors }
+              errors,
             );
-          })
+          }
+        }
+        catch (error) {
+          console.log(error.reason, "failed to send!!")
+          errors = error.reason
+          ApiResponse.ErrorResponse(
+            res,
+            errors,
+          );
+        }
       } else {
-        ApiResponse.ErrorResponse(
+        console.log("Low Ethers Balance");
+        return ApiResponse.ErrorResponse(
           res,
-          errors,
+          "Low Ethers Balance"
         );
       }
-    }
-    catch (error) {
-      console.log(error.reason, "failed to send!!")
-      errors = error.reason
-      ApiResponse.ErrorResponse(
+    } else {
+      console.log("Low Ethers Balance");
+      return ApiResponse.ErrorResponse(
         res,
-        errors,
+        "Low Ethers Balance"
       );
     }
   } catch (error) {
     console.log(error, "Unknown Error while Sending an NFT");
     ApiResponse.ErrorResponse(
       res,
-      'Error while Sending an NFT',
+      'Error while Sending an NFT, check Parameteres(contract address, nft id) and ownership of NFT',
     );
-    // res.status(503).send();
   }
 };
 
@@ -1208,5 +1394,6 @@ module.exports = {
   addStreamAddress,
   removeStreamAddress,
   getGasFees,
-  sendNFT
+  sendNFT,
+  readFunction
 };
