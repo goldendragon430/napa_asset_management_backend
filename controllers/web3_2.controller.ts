@@ -52,7 +52,7 @@ const nativeBalance = async (chainId: string, wallet_address: string) => {
       );
       response = await res.jsonResponse.balance;
     }).catch(async (e: any) => {
-      console.log(e, "Error while fetching Native Token Balance");
+      console.log(e, "Error Fetching Native Token Balance");
       response = await e;
     });
   } catch (e: any) {
@@ -71,7 +71,7 @@ const transactionHistory = async (req, res) => {
     }).then((response: any) => {
       return ApiResponse.successResponseWithData(
         res,
-        "Transactions fetched successfully",
+        "Transactions Fetched Successfully",
         { TransactionHistory: response }
       );
     }).catch((e: any) => {
@@ -292,7 +292,7 @@ const sendNativeToken = async (req, res) => {
               const response: any = await walletSigner.sendTransaction(tx)
               return ApiResponse.successResponseWithData(
                 res,
-                "Native Tokens sent successfully.",
+                "Native Token Sent Successfully",
                 { NativeTokenSend: response }
               );
 
@@ -300,7 +300,7 @@ const sendNativeToken = async (req, res) => {
               console.log("failed to send!!");
               return ApiResponse.ErrorResponse(
                 res,
-                "failed to send!!"
+                "Failed to Complete Send"
               );
             }
           } else {
