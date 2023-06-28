@@ -5,21 +5,21 @@ import Moralis from "moralis";
 import { ethers, utils } from "ethers";
 import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
 import commonNftAbi from "../web3Utils/abis/nftAbi.json";
-import { AllChainId } from "../web3Utils/chainHelper";
+import { AllChainIdNew } from "../web3Utils/chainData";
 import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Utils/addresses";
 import napaTokenAbi from "../web3Utils/abis/napaTokenAbi.json"
 import napaStakingAbi from "../web3Utils/abis/stakingAbi.json"
 
-// 1.  transaction history - DONE
-// 2.  wallet balance - both (1. custom and 2. native) DONE
-// 3.  create Wallet - Done
-// 4.  send & Receive Tokens - Done
-// 5.  switching chain. - Done
-// 6.  import tokens - Done
-// 7.  import wallet. - Done
-// 8.  Import NFTs. - Done
-// 9.  fetch Current Network. - Done
-// 10. stake & unstake. - Done.
+// 1. transaction history - DONE
+// 2. wallet balance - both (1. custom and 2. native) DONE
+// 3. create Wallet - Done
+// 4. send & Receive Tokens - Done
+// 5. switching chain. - Will be Done from front-end side
+// 6. import tokens - Done
+// 7. import wallet. - Done
+// 8. Import NFTs. - Done
+// 9. fetch Current Network. - Done
+// 10. stake & unstake. - Inprogress.
 
 
 /*
@@ -88,10 +88,7 @@ const transactionHistory = async (req, res) => {
     );
   } catch (error) {
     console.log(error, "Error while Fetching transactions");
-    res.status(503).json({
-      error,
-      message:error.message
-    });
+    res.status(503).send();
   }
 };
 
@@ -140,6 +137,8 @@ const nativeTokenWalletBalance = async (req, res) => {
     res.status(503).send();
   }
 };
+
+
 
 /*
   (2.2) customTokenWalletBalance() for one or more tokens
@@ -197,6 +196,8 @@ const customTokenWalletBalance = async (req, res) => {
   }
 };
 
+
+
 /*
   (3) createWallet()
   request: 
@@ -238,23 +239,16 @@ const createWallet = async (req, res) => {
   try {
     const response = ethers.Wallet.createRandom();
     console.log(response, "Wallet creation response.");
-    console.log(response.address, "public Key.");
-    console.log(response._signingKey().privateKey, "private key.");
-    console.log(response._mnemonic().phrase, "MNEMONIC.");
-    const walletData = {
-      public_key:response.address,
-      private_key:response._signingKey().privateKey,
-      mnemonic:response._mnemonic().phrase
-    }
-    
+
     ApiResponse.successResponseWithData(res, "Wallet created successfully", {
-      CreateWallet: walletData,
+      CreateWallet: response,
     });
   } catch (error) {
     console.log(error, "Error while Fetching creating a Wallet");
     res.status(503).send();
   }
 };
+
 
 /*
   (4) sendNativeToken()
@@ -476,6 +470,8 @@ const importToken = async (req, res) => {
   }
 };
 
+
+
 /*
   (6) importAccountFromPrivateKey()
   request: 
@@ -512,6 +508,7 @@ const importAccountFromPrivateKey = async (req, res) => {
     res.status(503).send();
   }
 };
+
 
 /*
   (7) importAccountFromPhrase()
@@ -571,6 +568,7 @@ const importAccountFromPhrase = async (req, res) => {
   }
 };
 
+
 /*
   (7) importAccountFromPhrase()
   request: 
@@ -615,6 +613,9 @@ const importNFTs = async (req, res) => {
     res.status(503).send();
   }
 };
+
+
+
 
 /*
   (7) switchNetwork()
@@ -678,26 +679,26 @@ const switchNetwork = async (req, res) => {
     console.log(data, "Network Before.");
 
     if ((req.query.id).toString() === "1") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[0].rpcURL);
-      response = AllChainId[0].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[0].rpcURL);
+      response = AllChainIdNew[0].name;
     } else if ((req.query.id).toString() === "2") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[1].rpcURL);
-      response = AllChainId[1].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[1].rpcURL);
+      response = AllChainIdNew[1].name;
     } else if ((req.query.id).toString() === "3") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[2].rpcURL);
-      response = AllChainId[2].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[2].rpcURL);
+      response = AllChainIdNew[2].name;
     } else if ((req.query.id).toString() === "4") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[3].rpcURL);
-      response = AllChainId[3].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[3].rpcURL);
+      response = AllChainIdNew[3].name;
     } else if ((req.query.id).toString() === "5") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[4].rpcURL);
-      response = AllChainId[4].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[4].rpcURL);
+      response = AllChainIdNew[4].name;
     } else if ((req.query.id).toString() === "6") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[5].rpcURL);
-      response = AllChainId[5].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[5].rpcURL);
+      response = AllChainIdNew[5].name;
     } else if ((req.query.id).toString() === "7") {
-      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainId[6].rpcURL);
-      response = AllChainId[6].name;
+      global.ethersProvider = new ethers.providers.JsonRpcProvider(AllChainIdNew[6].rpcURL);
+      response = AllChainIdNew[6].name;
     } else {
       console.log("Please select Correct N/w");
       response = "Please select Correct N/w";
@@ -817,14 +818,14 @@ const stakeNapaTokens = async (req, res) => {
     const decimals = 10 ** 18;
     const amtInWei = req.query.amount * decimals;
 
-    const wallet = new ethers.Wallet((req.query.private_key).toString());
-    const walletSigner = wallet.connect(global.ethersProvider);
+    let wallet = new ethers.Wallet((req.query.private_key).toString());
+    let walletSigner = wallet.connect(global.ethersProvider);
 
     const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
     const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
 
-    const userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
-    const userStakedAmt = userDeposit[1].toString();
+    let userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
+    let userStakedAmt = userDeposit[1].toString();
 
     if (userStakedAmt > 0) {
       error = "Already staked for this plan";
@@ -900,121 +901,66 @@ const stakeNapaTokens = async (req, res) => {
   }
 };
 
-/*
-  (10.2) unstakeNapaTokens()
-  request: 
-  params: {
-    plan:30 || 60 || 90 || 120,
-    address: "0xc30e6da665e55Fc9a935A2D2B4be174281991C5E",
-    privateKey:" YOUR_PRIVATE_KEY"
-      },
-  expected response: {
-       "unStakingResponse": {
-           "currentReward": 0.21243471748935505,
-           "unStakeResponse": {
-               "to": "0x652b61A82eC3eba8cA6b3c4B5836aE477F36BD3C",
-               "from": "0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440",
-               "contractAddress": null,
-               "transactionIndex": 15,
-               "gasUsed": {
-                   "type": "BigNumber",
-                   "hex": "0x01cce8"
-               },
-  }
-*/
 
 
 const unstakeNapaTokens = async (req, res) => {
   try {
-    let error = "No Errors";
-    let currentReward = 0;
+    let error;
+    let currentReward;
     let unStakeResponse;
     const decimals = 10 ** 18;
 
-    const wallet = new ethers.Wallet((req.query.private_key).toString());
-    const walletSigner = wallet.connect(global.ethersProvider);
+    let wallet = new ethers.Wallet((req.query.private_key).toString());
+    let walletSigner = wallet.connect(global.ethersProvider);
 
+    const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
     const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
 
-    const _userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
+    let userDeposit = await napaStakeCtr.UserPlanDetails((req.query.address).toString(), (req.query.plan).toString());
+    let userStakedAmt = userDeposit[1].toString();
+    currentReward = (Number((await napaStakeCtr.checkReward(req.query.plan)).toString()) / decimals).toFixed(8);
 
-    if (Number(_userDeposit[1].toString()) > 0) {
-      const rewardsEarned = (Number((await napaStakeCtr.checkReward(req.query.plan)).toString()) / decimals).toFixed(18);
-      console.log("rewards earned ===>", rewardsEarned);
-      currentReward = Number(rewardsEarned);
+    //start Time
+    const startDate = new Date(Number((userDeposit[2].toString()) * 1000));
+    //end Time
+    const endDate = new Date(Number((userDeposit[3].toString()) * 1000));
+    //current Time
+    var currentUnix = Math.round(+new Date() / 1000);
+
+    if (Number(req.query.plan) === 30 || Number(req.query.plan) === 60 || Number(req.query.plan) === 90 || Number(req.query.plan) === 120) {
+      isCorrectPlan = true;
+    } else {
+      isCorrectPlan = false;
     }
 
-    const date = new Date(Number((_userDeposit[3].toString()) * 1000));
-    const currentUnix = Math.round(+new Date() / 1000);
+    if (userStakedAmt > 0) {
+      error = "Already staked for this plan";
+    }
+    else {
+      let isCorrectPlan = false;
 
-    if (Number(_userDeposit[1].toString()) <= 0) {
-      console.log("you don't have any tokens staked for this plan yet");
-      error = "you don't have any tokens staked for this plan yet";
-    } else if (Number(_userDeposit[3].toString()) > currentUnix) {
-      console.log(`Tokens are locked, you can't unstake now, wait till ${date}`);
-      error = `Tokens are locked, you can't unstake now, wait till ${date}`
-    } else if (Number(_userDeposit[3].toString()) < Number(currentUnix) && Number(_userDeposit[1].toString()) > 0) {
-      const treasuryToStakeCtrAllowance = await napaStakeCtr.pendingRewards();
-      if (treasuryToStakeCtrAllowance > 0) {
-        await napaStakeCtr.UnstakeTokens(req.query.plan).then(async (res: any) => {
-          console.log("transaction for Unstake is in progress..");
-          unStakeResponse = await res.wait();
-          console.log("transaction for Unstake is complete..");
-        }).catch((e: any) => {
-          console.log(e, "Error while unstake");
-        })
+      const userBal: number = await napaTokenCtr.balanceOf((req.query.address).toString());
+      if (Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120) {
+        error = "Selected Wrong Plan,  Choose from (30,60,90 or 120) days";
       }
-    } else {
-      console.log("Not Enough Pending Rewards: admin hasn't added rewards yet.");
+      if (Number(req.query.amount) <= 0) {
+        error = "please enter some amount";
+      }
+      if (userStakedAmt > 0) {
+        error = `you already have ${userStakedAmt / decimals} token stake`;
+      }
+      if (Number(await userBal / decimals) < Number(req.query.amount) && Number(await userBal) <= 0) {
+        error = `you have ${(await userBal).toString()} tokens which are less to stake! `;
+      }
+
     }
 
     ApiResponse.successResponseWithData(res, "Resposne From Stake.", {
-      unStakingResponse: { currentReward, unStakeResponse, error },
+      stakingResponse: { approvalResponse, stakeResponse, error },
     });
 
   } catch (err) {
     console.log(err, "Error while Staking.");
-    res.status(503).send();
-  }
-};
-
-
-
-/*(10.3) fetchAccountsByIndex()
-request: 
-params: {
-  plan:30 || 60 || 90 || 120,
-  address: "0xc30e6da665e55Fc9a935A2D2B4be174281991C5E",
-  privateKey:" YOUR_PRIVATE_KEY"
-    },
-expected response: {
-     "unStakingResponse": {
-         "currentReward": 0.21243471748935505,
-         "unStakeResponse": {
-             "to": "0x652b61A82eC3eba8cA6b3c4B5836aE477F36BD3C",
-             "from": "0xE4F3fD84131dEedB822Bd2D457Bb7f406d971440",
-             "contractAddress": null,
-             "transactionIndex": 15,
-             "gasUsed": {
-                 "type": "BigNumber",
-                 "hex": "0x01cce8"
-             },
-}
-*/
-
-
-const fetchAccountsByIndex = async (req, res) => {
-  try {
-    const hdNode = utils.HDNode.fromMnemonic(req.query.phrase);
-
-    const desiredAccount = hdNode.derivePath(`m/44'/60'/0'/0/${req.query.index}`);
-    console.log("First Account", desiredAccount);
-
-    ApiResponse.successResponseWithData(res, "Account successfully imported By Phrase and Index.", {
-      tokenData: { desiredAccount },
-    });
-  } catch (error) {
-    console.log(error, "Error while Importing Account");
     res.status(503).send();
   }
 };
@@ -1034,6 +980,5 @@ module.exports = {
   switchNetwork,
   getCurrentNetwork,
   stakeNapaTokens,
-  unstakeNapaTokens,
-  fetchAccountsByIndex
+  // unstakeNapaTokens
 };
