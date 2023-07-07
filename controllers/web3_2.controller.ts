@@ -555,7 +555,6 @@ const importNFTs = async (req, res) => {
     const contractAddress = (req.query.contract).toString();
     const tokenId = (req.query.tokenId).toString();
     const provider = await setProvider(req.query.chainId);
-
     console.log(String(chainData?.hex))
 
     await Moralis.EvmApi.nft.getNFTTokenIdOwners({
@@ -1065,12 +1064,12 @@ const readFunction = async (req, res) => {
     try {
       convertedABI = JSON.parse(req.body.params.callData.abi);
       convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
-      functionName = JSON.parse(req.body.params.callData.funcionName);
+      functionName = JSON.parse(req.body.params.callData.functionName);
       allParams = JSON.parse(req.body.params.callData.allParams);
     } catch {
       convertedABI = req.body.params.callData.abi;
       convertedContractAddress = req.body.params.callData.contractAddress;
-      functionName = req.body.params.callData.funcionName;
+      functionName = req.body.params.callData.functionName;
       allParams = req.body.params.callData.allParams;
     }
 
