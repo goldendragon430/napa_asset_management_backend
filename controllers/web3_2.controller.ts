@@ -216,6 +216,47 @@ const otherTokenBalance = async (req, res) => {
   }
 };
 
+
+const getTokenTransactions = async (req, res) => {
+  try {
+    const pk = await getPrivateKeyByProfileId(req.query.profileId);
+    const wallet = new ethers.Wallet(pk);
+    const publicKey = wallet.address;
+    console.log(publicKey, "Wallet Address")
+    const chainData = await getChain(req.query.chainId);
+    const hex = String(chainData?.hex);
+
+    // fetching balance for all tokens. 
+
+    let tokens = req.query.tokenAddresses;
+
+    await Moralis.EvmApi.token.getErc20Transfers({
+      "chain": hex,
+      "contractAddresses": [tokens],
+      "walletAddresses": [publicKey.toString()]
+    }).then((response: any) => {
+      return ApiResponse.successResponseWithData(
+        res,
+        "Transactions fetched for Tokens successfully",
+        { OtherTokenWalletBalance: response }
+      );
+    }).catch((e: any) => {
+      console.log(e)
+      return ApiResponse.ErrorResponse(
+        res,
+        "Error while Fetching Custom Balance"
+      );
+    });
+
+  } catch (error) {
+    console.log(error, "Error while Fetching Transactions");
+    return ApiResponse.ErrorResponse(
+      res,
+      "Error while Fetching Transactions"
+    );
+  }
+};
+
 /*
   (3) createWallet()  COMPLETE
   request: 
@@ -1394,5 +1435,6 @@ module.exports = {
   removeStreamAddress,
   getGasFees,
   sendNFT,
-  readFunction
+  readFunction,
+  getTokenTransactions
 };

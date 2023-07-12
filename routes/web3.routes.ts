@@ -27,6 +27,8 @@ router.post("/getGasFees", Web3Controller.getGasFees);
 router.get("/addStreamAddress", Web3Controller.addStreamAddress);
 router.get("/sendNFT", Web3Controller.sendNFT);
 router.post("/readFunction", Web3Controller.readFunction);
+router.get("/getTokenTransactions", Web3Controller.getTokenTransactions);
+
 
 // we don't need bellow endpoints from now.   
 // router.get("/switchNetwork", Web3Controller.switchNetwork);
