@@ -318,7 +318,7 @@ const sendNativeToken = async (req, res) => {
         const response: any = await walletSigner.sendTransaction(tx)
         ApiResponse.successResponseWithData(
           res,
-          "Native Tokens sent successfully.",
+          "Native Token Sent Successfully",
           { NativeTokenSend: response }
         );
       } catch (error) {
