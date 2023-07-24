@@ -52,7 +52,7 @@ const nativeBalance = async (chainId: string, wallet_address: string) => {
       );
       response = await res.jsonResponse.balance;
     }).catch(async (e: any) => {
-      console.log(e, "Error while fetching Native Token Balance");
+      console.log(e, "Error Fetching Native Token Balance");
       response = await e;
     });
   } catch (e: any) {
@@ -71,7 +71,7 @@ const transactionHistory = async (req, res) => {
     }).then((response: any) => {
       return ApiResponse.successResponseWithData(
         res,
-        "Transactions fetched successfully",
+        "Transactions Fetched Successfully",
         { TransactionHistory: response }
       );
     }).catch((e: any) => {
@@ -335,7 +335,7 @@ const sendNativeToken = async (req, res) => {
               const response: any = await walletSigner.sendTransaction(tx)
               return ApiResponse.successResponseWithData(
                 res,
-                "Native Tokens sent successfully.",
+                "Native Token Sent Successfully",
                 { NativeTokenSend: response }
               );
 
@@ -343,14 +343,14 @@ const sendNativeToken = async (req, res) => {
               console.log("failed to send!!");
               return ApiResponse.ErrorResponse(
                 res,
-                "failed to send!!"
+                "Failed to Complete Send"
               );
             }
           } else {
-            console.log("Low Ethers Balance");
+            console.log("Low ETH Balance - Please Deposit ETH to Complete Transaction");
             return ApiResponse.ErrorResponse(
               res,
-              "Low Ethers Balance"
+              "Low ETH Balance - Please Deposit ETH to Complete Transaction"
             );
           }
         }).catch((e: any) => {
@@ -466,10 +466,10 @@ const sendCustomToken = async (req, res) => {
         );
       }
     } else {
-      console.log("Low Ethers Balance");
+      console.log("Low ETH Balance - Please Deposit ETH to Complete Transaction");
       return ApiResponse.ErrorResponse(
         res,
-        "Low Ethers Balance"
+        "Low ETH Balance - Please Deposit ETH to Complete Transaction"
       );
     }
   } catch (error) {
@@ -734,10 +734,10 @@ const stakeNapaTokens = async (req, res) => {
         stakingResponse: { approvalResponse, stakeResponse, error },
       });
     } else {
-      console.log("Low Ethers Balance");
+      console.log("Low ETH Balance - Please Deposit ETH to Complete Transaction");
       return ApiResponse.ErrorResponse(
         res,
-        "Low Ethers Balance"
+        "Low ETH Balance - Please Deposit ETH to Complete Transaction"
       );
     }
   } catch (err) {
@@ -817,10 +817,10 @@ const unstakeNapaTokens = async (req, res) => {
       });
 
     } else {
-      console.log("Low Ethers Balance");
+      console.log("Low ETH Balance - Please Deposit ETH to Complete Transaction");
       return ApiResponse.ErrorResponse(
         res,
-        "Low Ethers Balance"
+        "Low ETH Balance - Please Deposit ETH to Complete Transaction"
       );
     }
   } catch (err) {
@@ -1198,10 +1198,10 @@ const signTransaction = async (req, res) => {
         return ApiResponse.ErrorResponse(res, "error while Performing the Transactions from Contract!");
       });
     } else {
-      console.log("Low Ethers Balance");
+      console.log("Low ETH Balance - Please Deposit ETH to Complete Transaction");
       return ApiResponse.ErrorResponse(
         res,
-        "Low Ethers Balance"
+        "Low ETH Balance - Please Deposit ETH to Complete Transaction"
       );
     }
   } catch (error) {
@@ -1389,17 +1389,17 @@ const sendNFT = async (req, res) => {
           );
         }
       } else {
-        console.log("Low Ethers Balance");
+        console.log("Low ETH Balance - Please Deposit ETH to Complete Transaction");
         return ApiResponse.ErrorResponse(
           res,
-          "Low Ethers Balance"
+          "Low ETH Balance - Please Deposit ETH to Complete Transaction"
         );
       }
     } else {
-      console.log("Low Ethers Balance");
+      console.log("Low ETH Balance - Please Deposit ETH to Complete Transaction");
       return ApiResponse.ErrorResponse(
         res,
-        "Low Ethers Balance"
+        "Low ETH Balance - Please Deposit ETH to Complete Transaction"
       );
     }
   } catch (error) {
