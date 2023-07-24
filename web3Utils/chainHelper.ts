@@ -149,41 +149,98 @@ export const AllChainId = [
 ]
 
 
+// export const setProvider = async (chainId: any) => {
+//     const urlData = await getWorkingUrl(chainId);
+//     console.log("workingRPC", urlData, "workingRPC");
+//     let provider: any;
+//     try {
+//         if (urlData.totatURLs > 0) {
+//             provider = new ethers.providers.JsonRpcProvider(urlData.urls[0]);
+//             console.log("URL from Moralis", urlData.urls[0]);
+//         } else {
+//             console.log("URL from STATIC Source");
+//             if (Number(chainId) == 0) {
+//                 provider = new ethers.providers.JsonRpcProvider(AllChainId[0].rpcURL);
+//                 console.log("for ETHEREUM MAIN Network");
+//             } else if (Number(chainId) == 1) {
+//                 provider = new ethers.providers.JsonRpcProvider(AllChainId[1].rpcURL);
+//                 console.log("for GOERLI Network");
+//             } else if (Number(chainId) == 2) {
+//                 provider = new ethers.providers.JsonRpcProvider(AllChainId[2].rpcURL);
+//                 console.log("for SEPOLIA Network");
+//             } else if (Number(chainId) == 3) {
+//                 provider = new ethers.providers.JsonRpcProvider(AllChainId[3].rpcURL);
+//                 console.log("for BNB TEST Network");
+//             } else if (Number(chainId) == 4) {
+//                 provider = new ethers.providers.JsonRpcProvider(AllChainId[4].rpcURL);
+//                 console.log("for BNB MAIN Network");
+//             } else if (Number(chainId) == 5) {
+//                 provider = new ethers.providers.JsonRpcProvider(AllChainId[5].rpcURL);
+//                 console.log("for POLYGON MAIN Network");
+//             } else if (Number(chainId) == 6) {
+//                 provider = new ethers.providers.JsonRpcProvider(AllChainId[6].rpcURL);
+//                 console.log("for MUMBAI TEST Network");
+//             } else {
+//                 console.log("Sent Wrong Network ID");
+//                 return 0;
+//             }
+//         }
+//     } catch (e: any) {
+//         console.log(e, "Error while setting the Provider");
+//         return 0;
+//     }
+//     return provider;
+// }
+
 export const setProvider = async (chainId: any) => {
     const urlData = await getWorkingUrl(chainId);
     console.log("workingRPC", urlData, "workingRPC");
     let provider: any;
+    let blockNumber: string | number = 0;
     try {
-        if (urlData.totatURLs > 0) {
-            provider = new ethers.providers.JsonRpcProvider(urlData.urls[0]);
-            console.log("URL from Moralis", urlData.urls[0]);
+        if (Number(chainId) == 0) {
+            provider = new ethers.providers.JsonRpcProvider(AllChainId[0].rpcURL);
+            blockNumber = await provider.getBlockNumber();
+            console.log("for ETHEREUM MAIN Network");
+        } else if (Number(chainId) == 1) {
+            provider = new ethers.providers.JsonRpcProvider(AllChainId[1].rpcURL);
+            blockNumber = await provider.getBlockNumber();
+            console.log("for GOERLI Network");
+        } else if (Number(chainId) == 2) {
+            provider = new ethers.providers.JsonRpcProvider(AllChainId[2].rpcURL);
+            console.log(await provider.getBlockNumber(), "Latest Block Number...!");
+            blockNumber = await provider.getBlockNumber();
+            console.log("for SEPOLIA Network");
+        } else if (Number(chainId) == 3) {
+            provider = new ethers.providers.JsonRpcProvider(AllChainId[3].rpcURL);
+            blockNumber = await provider.getBlockNumber();
+            console.log("for BNB TEST Network");
+        } else if (Number(chainId) == 4) {
+            provider = new ethers.providers.JsonRpcProvider(AllChainId[4].rpcURL);
+            blockNumber = await provider.getBlockNumber();
+            console.log("for BNB MAIN Network");
+        } else if (Number(chainId) == 5) {
+            provider = new ethers.providers.JsonRpcProvider(AllChainId[5].rpcURL);
+            blockNumber = await provider.getBlockNumber();
+            console.log("for POLYGON MAIN Network");
+        } else if (Number(chainId) == 6) {
+            provider = new ethers.providers.JsonRpcProvider(AllChainId[6].rpcURL);
+            blockNumber = await provider.getBlockNumber();
+            console.log("for MUMBAI TEST Network");
         } else {
-            console.log("URL from STATIC Source");
-            if (Number(chainId) == 0) {
-                provider = new ethers.providers.JsonRpcProvider(AllChainId[0].rpcURL);
-                console.log("for ETHEREUM MAIN Network");
-            } else if (Number(chainId) == 1) {
-                provider = new ethers.providers.JsonRpcProvider(AllChainId[1].rpcURL);
-                console.log("for GOERLI Network");
-            } else if (Number(chainId) == 2) {
-                provider = new ethers.providers.JsonRpcProvider(AllChainId[2].rpcURL);
-                console.log("for SEPOLIA Network");
-            } else if (Number(chainId) == 3) {
-                provider = new ethers.providers.JsonRpcProvider(AllChainId[3].rpcURL);
-                console.log("for BNB TEST Network");
-            } else if (Number(chainId) == 4) {
-                provider = new ethers.providers.JsonRpcProvider(AllChainId[4].rpcURL);
-                console.log("for BNB MAIN Network");
-            } else if (Number(chainId) == 5) {
-                provider = new ethers.providers.JsonRpcProvider(AllChainId[5].rpcURL);
-                console.log("for POLYGON MAIN Network");
-            } else if (Number(chainId) == 6) {
-                provider = new ethers.providers.JsonRpcProvider(AllChainId[6].rpcURL);
-                console.log("for MUMBAI TEST Network");
-            } else {
-                console.log("Sent Wrong Network ID");
-                return 0;
-            }
+            console.log("Sent Wrong Network ID");
+            return 0;
+        }
+
+
+        if (Number(blockNumber) > 0) {
+            console.log("URL from STATIC Source is being used : ", AllChainId[chainId].rpcURL);
+        }
+        else if (urlData.totatURLs > 0) {
+            provider = new ethers.providers.JsonRpcProvider(urlData.urls[0]);
+            console.log("URL from Moralis  is being used : ", urlData.urls[0]);
+        } else {
+            console.log("None of the URLs worked....!")
         }
     } catch (e: any) {
         console.log(e, "Error while setting the Provider");
