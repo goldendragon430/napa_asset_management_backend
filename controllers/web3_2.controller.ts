@@ -113,7 +113,9 @@ const etherBalance = async (req, res) => {
           CustomTokenWalletBalance: response,
         });
       } else {
-        return ApiResponse.ErrorResponse(res, "Low/Zero Ether Balance");
+        return ApiResponse.successResponseWithData(res, "Low/Zero Ether Balance",{
+          CustomTokenWalletBalance:response
+        });
       }
     }).catch((e: any) => {
       console.log(e, "1 Error while Fetching Ether Balance");
