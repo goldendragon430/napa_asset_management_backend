@@ -113,8 +113,8 @@ const etherBalance = async (req, res) => {
           CustomTokenWalletBalance: response,
         });
       } else {
-        return ApiResponse.successResponseWithData(res, "Low/Zero Ether Balance",{
-          CustomTokenWalletBalance:response
+        return ApiResponse.successResponseWithData(res, "Low/Zero Ether Balance", {
+          CustomTokenWalletBalance: response
         });
       }
     }).catch((e: any) => {
@@ -684,28 +684,29 @@ const stakeNapaTokens = async (req, res) => {
           await napaTokenCtr.approve(originalNapaStakingAddress, amtInWei.toString()).then(async (res) => {
             approvalResponse = await res.wait();
 
-            if (req.query.plan == 30) {
+            if (Number(req.query.plan) === 30) {
               await napaStakeCtr.stakeTokens(amtInWei.toString(), 30).then(async (res: any) => {
                 stakeResponse = await res.wait();
               }).catch((e: any) => {
                 error = e + "Error while Staking";
               })
             }
-            else if (req.query.plan == 60) {
+            else if (Number(req.query.plan) === 60) {
               await napaStakeCtr.stakeTokens(amtInWei.toString(), 60).then(async (res: any) => {
                 stakeResponse = await res.wait();
               }).catch((e: any) => {
                 error = e + "Error while Staking";
               })
             }
-            else if (req.query.plan == 90) {
+            else if (Number(req.query.plan) === 90) {
               await napaStakeCtr.stakeTokens(amtInWei.toString(), 90).then(async (res: any) => {
                 stakeResponse = await res.wait();
               }).catch((e: any) => {
                 error = e + "Error while Staking";
               })
             }
-            else if (req.query.plan == 120) {
+            else if ((req.query.plan) === "120") {
+              console.log("- - - - - - - - - - - - stacked for 120 Days - - - - - - - - - - - - -")
               await napaStakeCtr.stakeTokens(amtInWei.toString(), 120).then(async (res: any) => {
                 stakeResponse = await res.wait();
               }).catch((e: any) => {
@@ -716,6 +717,7 @@ const stakeNapaTokens = async (req, res) => {
             error = e + "Error while taking an Approval";
           });
         } else {
+          console.log(req.query.plan, typeof req.query.plan, "~~~~~~~~~~~~~~~~~~~ P L A N ~~~~~~~~~~~~~~~~~~", Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120);
           if (Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120) {
             error = "Selected Wrong Plan,  Choose from (30,60,90 or 120) days";
           }
@@ -1107,12 +1109,12 @@ const readFunction = async (req, res) => {
     try {
       convertedABI = JSON.parse(req.body.params.callData.abi);
       convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
-      functionName = JSON.parse(req.body.params.callData.functionName);
+      functionName = JSON.parse(req.body.params.callData.funcionName);
       allParams = JSON.parse(req.body.params.callData.allParams);
     } catch {
       convertedABI = req.body.params.callData.abi;
       convertedContractAddress = req.body.params.callData.contractAddress;
-      functionName = req.body.params.callData.functionName;
+      functionName = req.body.params.callData.funcionName;
       allParams = req.body.params.callData.allParams;
     }
 
