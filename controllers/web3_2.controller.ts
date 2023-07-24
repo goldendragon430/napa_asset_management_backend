@@ -230,7 +230,7 @@ const getTokenTransactions = async (req, res) => {
 
     // fetching balance for all tokens. 
 
-    let tokens = req.query.tokenAddresses;
+    const tokens = req.query.tokenAddresses;
 
     await Moralis.EvmApi.token.getErc20Transfers({
       "chain": hex,
