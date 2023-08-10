@@ -1153,13 +1153,13 @@ const signTransaction = async (req, res) => {
     try {
       convertedABI = JSON.parse(req.body.params.callData.abi);
       convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
-      functionName = JSON.parse(req.body.params.callData.funcionName);
+      functionName = JSON.parse(req.body.params.callData.functionName);
       allParams = JSON.parse(req.body.params.callData.allParams);
       etherBalance = await nativeBalance(req.body.params.callData.chainId.toString(), publicKey.toString());
     } catch {
       convertedABI = req.body.params.callData.abi;
       convertedContractAddress = req.body.params.callData.contractAddress;
-      functionName = req.body.params.callData.funcionName;
+      functionName = req.body.params.callData.functionName;
       allParams = req.body.params.callData.allParams;
       etherBalance = await nativeBalance(req.body.params.callData.chainId.toString(), publicKey.toString());
     }
@@ -1263,12 +1263,12 @@ const getGasFees = async (req, res) => {
     try {
       convertedABI = JSON.parse(req.body.params.callData.abi);
       convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
-      functionName = JSON.parse(req.body.params.callData.funcionName);
+      functionName = JSON.parse(req.body.params.callData.functionName);
       allParams = JSON.parse(req.body.params.callData.allParams);
     } catch {
       convertedABI = req.body.params.callData.abi;
       convertedContractAddress = req.body.params.callData.contractAddress;
-      functionName = req.body.params.callData.funcionName;
+      functionName = req.body.params.callData.functionName;
       allParams = req.body.params.callData.allParams;
     }
 
