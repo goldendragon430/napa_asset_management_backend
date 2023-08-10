@@ -113,9 +113,7 @@ const etherBalance = async (req, res) => {
           CustomTokenWalletBalance: response,
         });
       } else {
-        return ApiResponse.successResponseWithData(res, "Low/Zero Ether Balance", {
-          CustomTokenWalletBalance: response
-        });
+        return ApiResponse.ErrorResponse(res, "Low/Zero Ether Balance");
       }
     }).catch((e: any) => {
       console.log(e, "1 Error while Fetching Ether Balance");
@@ -230,7 +228,7 @@ const getTokenTransactions = async (req, res) => {
 
     // fetching balance for all tokens. 
 
-    const tokens = req.query.tokenAddresses;
+    let tokens = req.query.tokenAddresses;
 
     await Moralis.EvmApi.token.getErc20Transfers({
       "chain": hex,
@@ -684,29 +682,28 @@ const stakeNapaTokens = async (req, res) => {
           await napaTokenCtr.approve(originalNapaStakingAddress, amtInWei.toString()).then(async (res) => {
             approvalResponse = await res.wait();
 
-            if (Number(req.query.plan) === 30) {
+            if (req.query.plan == 30) {
               await napaStakeCtr.stakeTokens(amtInWei.toString(), 30).then(async (res: any) => {
                 stakeResponse = await res.wait();
               }).catch((e: any) => {
                 error = e + "Error while Staking";
               })
             }
-            else if (Number(req.query.plan) === 60) {
+            else if (req.query.plan == 60) {
               await napaStakeCtr.stakeTokens(amtInWei.toString(), 60).then(async (res: any) => {
                 stakeResponse = await res.wait();
               }).catch((e: any) => {
                 error = e + "Error while Staking";
               })
             }
-            else if (Number(req.query.plan) === 90) {
+            else if (req.query.plan == 90) {
               await napaStakeCtr.stakeTokens(amtInWei.toString(), 90).then(async (res: any) => {
                 stakeResponse = await res.wait();
               }).catch((e: any) => {
                 error = e + "Error while Staking";
               })
             }
-            else if ((req.query.plan) === "120") {
-              console.log("- - - - - - - - - - - - stacked for 120 Days - - - - - - - - - - - - -")
+            else if (req.query.plan == 120) {
               await napaStakeCtr.stakeTokens(amtInWei.toString(), 120).then(async (res: any) => {
                 stakeResponse = await res.wait();
               }).catch((e: any) => {
@@ -717,7 +714,6 @@ const stakeNapaTokens = async (req, res) => {
             error = e + "Error while taking an Approval";
           });
         } else {
-          console.log(req.query.plan, typeof req.query.plan, "~~~~~~~~~~~~~~~~~~~ P L A N ~~~~~~~~~~~~~~~~~~", Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120);
           if (Number(req.query.plan) != 30 || Number(req.query.plan) != 60 || Number(req.query.plan) != 90 || Number(req.query.plan) != 120) {
             error = "Selected Wrong Plan,  Choose from (30,60,90 or 120) days";
           }
@@ -1109,12 +1105,12 @@ const readFunction = async (req, res) => {
     try {
       convertedABI = JSON.parse(req.body.params.callData.abi);
       convertedContractAddress = JSON.parse(req.body.params.callData.contractAddress);
-      functionName = JSON.parse(req.body.params.callData.funcionName);
+      functionName = JSON.parse(req.body.params.callData.functionName);
       allParams = JSON.parse(req.body.params.callData.allParams);
     } catch {
       convertedABI = req.body.params.callData.abi;
       convertedContractAddress = req.body.params.callData.contractAddress;
-      functionName = req.body.params.callData.funcionName;
+      functionName = req.body.params.callData.functionName;
       allParams = req.body.params.callData.allParams;
     }
 
@@ -1414,6 +1410,56 @@ const sendNFT = async (req, res) => {
 };
 
 
+const getTokensMarketPrice = async (req, res) => {
+  try {
+    const chainData = await getChain(req.query.chainId);
+    const tokenAddress = req.query.contract;
+    // "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" WETH ADDRESS 
+    await Moralis.EvmApi.token.getTokenPrice({
+      "chain": String(chainData?.hex),
+      // "include": "percent_change",
+      "address": tokenAddress.toString()
+    }).then((response: any) => {
+      return ApiResponse.successResponseWithData(res, "MarketPrice Fetched Successfully", {
+        tokenData: { response },
+      });
+    }).catch((e: any) => {
+      console.log(e)
+      return ApiResponse.ErrorResponse(res, "Error While Fetching MarketPrice");
+    });
+  } catch (error) {
+    console.log(error, "Error while Importing Token");
+    return ApiResponse.ErrorResponse(res, "Error While Fetching MarketPrice");
+  }
+};
+
+const getNFTMetadata = async (req, res) => {
+  try {
+    const chainData = await getChain(req.query.chainId);
+    const tokenAddress = req.query.contract;
+    const tokenId = req.query.tokenId;
+
+    await Moralis.EvmApi.nft.getNFTMetadata({
+      "chain": String(chainData?.hex),
+      "format": "decimal",
+      "normalizeMetadata": true,
+      "mediaItems": false,
+      "address": tokenAddress.toString(),
+      "tokenId": tokenId.toString()
+    }).then((response: any) => {
+      return ApiResponse.successResponseWithData(res, "MarketPrice Fetched Successfully", {
+        tokenData: { response },
+      });
+    }).catch((e: any) => {
+      console.log(e)
+      return ApiResponse.ErrorResponse(res, "Error While Fetching MarketPrice");
+    });
+  } catch (error) {
+    console.log(error, "Error while Importing Token");
+    return ApiResponse.ErrorResponse(res, "Error While Fetching MarketPrice");
+  }
+};
+
 module.exports = {
   transactionHistory,
   napaTokenBalance,
@@ -1440,5 +1486,7 @@ module.exports = {
   getGasFees,
   sendNFT,
   readFunction,
-  getTokenTransactions
+  getTokenTransactions,
+  getTokensMarketPrice,
+  getNFTMetadata
 };

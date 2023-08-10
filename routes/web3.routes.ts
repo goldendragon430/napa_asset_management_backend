@@ -28,6 +28,8 @@ router.get("/addStreamAddress", Web3Controller.addStreamAddress);
 router.get("/sendNFT", Web3Controller.sendNFT);
 router.post("/readFunction", Web3Controller.readFunction);
 router.get("/getTokenTransactions", Web3Controller.getTokenTransactions);
+router.get("/getTokensMarketPrice", Web3Controller.getTokensMarketPrice);
+router.get("/getNFTMetadata", Web3Controller.getNFTMetadata);
 
 
 // we don't need bellow endpoints from now.   
