@@ -658,7 +658,7 @@ const stakeNapaTokens = async (req, res) => {
       const _provider = await setProvider(req.query.chainId);
       const walletSigner = wallet.connect(_provider);
 
-      const napaTokenCtr = new ethers.Contract(process.env.NAPA_TOKEN, napaTokenAbi.abi, walletSigner);
+      const napaTokenCtr = new ethers.Contract(process.env.NAPA_TOKEN as string, napaTokenAbi.abi, walletSigner);
       const napaStakeCtr = new ethers.Contract(process.env.NAPA_STAKING as string, napaStakingAbi.abi, walletSigner);
 
       const userDeposit = await napaStakeCtr.UserPlanDetails((publicKey).toString(), (req.query.plan).toString());
