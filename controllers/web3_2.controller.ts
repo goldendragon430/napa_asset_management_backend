@@ -6,7 +6,6 @@ import commonTokenAbi from "../web3Utils/abis/tokenAbi.json";
 import commonNFTAbi from "../web3Utils/abis/nft.json";
 import nftABI from "../web3Utils/abis/nft.json";
 import { getChain, setProvider } from "../web3Utils/chainHelper";
-import { originalNapaStakingAddress, originalNapatokenAddress } from "../web3Utils/addresses";
 import napaTokenAbi from "../web3Utils/abis/napaTokenAbi.json"
 import napaStakingAbi from "../web3Utils/abis/stakingAbi.json"
 import { getPhraseByProfileId, getPrivateKeyByProfileId } from "../utils/napa-accounts";
@@ -659,8 +658,8 @@ const stakeNapaTokens = async (req, res) => {
       const _provider = await setProvider(req.query.chainId);
       const walletSigner = wallet.connect(_provider);
 
-      const napaTokenCtr = new ethers.Contract(originalNapatokenAddress, napaTokenAbi.abi, walletSigner);
-      const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
+      const napaTokenCtr = new ethers.Contract(process.env.NAPA_TOKEN, napaTokenAbi.abi, walletSigner);
+      const napaStakeCtr = new ethers.Contract(process.env.NAPA_STAKING as string, napaStakingAbi.abi, walletSigner);
 
       const userDeposit = await napaStakeCtr.UserPlanDetails((publicKey).toString(), (req.query.plan).toString());
       const userStakedAmt = userDeposit[1].toString();
@@ -679,7 +678,7 @@ const stakeNapaTokens = async (req, res) => {
         const userBal: number = await napaTokenCtr.balanceOf((publicKey).toString());
 
         if ((await userBal / decimals) > req.query.amount && await userBal > 0 && userStakedAmt <= 0 && Number(req.query.amount) > 0 && isCorrectPlan) {
-          await napaTokenCtr.approve(originalNapaStakingAddress, amtInWei.toString()).then(async (res) => {
+          await napaTokenCtr.approve(process.env.NAPA_STAKING as string, amtInWei.toString()).then(async (res) => {
             approvalResponse = await res.wait();
 
             if (req.query.plan == 30) {
@@ -776,7 +775,7 @@ const unstakeNapaTokens = async (req, res) => {
       const _provider = await setProvider(req.query.chainId);
       const walletSigner = wallet.connect(_provider);
 
-      const napaStakeCtr = new ethers.Contract(originalNapaStakingAddress, napaStakingAbi.abi, walletSigner);
+      const napaStakeCtr = new ethers.Contract(process.env.NAPA_STAKING as string, napaStakingAbi.abi, walletSigner);
 
       const _userDeposit = await napaStakeCtr.UserPlanDetails((publicKey).toString(), (req.query.plan).toString());
 
