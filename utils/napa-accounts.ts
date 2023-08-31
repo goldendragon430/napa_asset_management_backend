@@ -19,3 +19,13 @@ export const getPrivateKeyByProfileId = async (profileId: string) => {
   const activeWalletAC = response?.data?.data?.activeWalletAC
   return decryptString(response?.data?.data[`NWA_${activeWalletAC}_PK`]);
 };
+
+export const getDeviceToken = async (address: string) => {
+  const options = {
+    method: "GET",
+    url: `https://napa-backend-staging.napasociety.io/getDeviceToken?address=${address}`,
+  };
+  const response = await axios(options);
+  const deviceToken = response?.data?.data?.deviceToken
+  return deviceToken
+};
