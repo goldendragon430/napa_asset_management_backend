@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { NextFunction, Request, Response } from "express";
 import express from "express";
 import cors from "cors";
@@ -9,6 +10,7 @@ import setUpRoutes from "./routes/index.routes";
 import { SocketService } from "./services/index.services";
 import WebSocket from "ws";
 import { startMoralis } from "./utils/moralis";
+const FCM = require("fcm-node");
 
 const httpServer = server.createServer(app);
 const wss = new WebSocket.Server({ server: httpServer });
@@ -16,6 +18,9 @@ const socketService = new SocketService(wss);
 
 dotenv.config({ path: "./.env" });
 global.SocketService = socketService;
+
+const serverKey = 'AAAAy9mJvkQ:APA91bGpBzqmhRQozvboKwqjyXx7m56C0jX_xqKwj4-ZPAsAbXUe31izFfQYlL-2UF6e-JB84UeM6gRqre53Ez2gpG_sGx7Hxuuo0MBLtwedJEUJWwD_qWMSlDaIRrBzT5iN_TSzzXWg';
+const fcm = new FCM(serverKey);
 
 startMoralis();
 
@@ -79,6 +84,6 @@ httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
 
-export { socialArtDB, napaDB, stakingDB, assetManagementDB };
+export { socialArtDB, napaDB, stakingDB, assetManagementDB, fcm };
 
 export default app;
