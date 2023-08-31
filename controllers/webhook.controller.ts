@@ -7,16 +7,16 @@ const webhook = async (req, res) => {
   try {
     console.log(body);
     if (body?.erc20Transfers[0]) {
-      console.log("body?.erc20Transfers[0]=====>>>>>", body?.erc20Transfers[0]);
+      console.log("body?.erc20Transfers[0]", body?.erc20Transfers[0]);
       
       const getSenderProfileId = `SELECT profileId FROM napa_accounts WHERE NWA_1_AC = "${body?.erc20Transfers[0]?.from}" OR NWA_2_AC = "${body?.erc20Transfers[0]?.from}" OR NWA_3_AC = "${body?.erc20Transfers[0]?.from}" OR NWA_4_AC = "${body?.erc20Transfers[0]?.from}" OR NWA_5_AC = "${body?.erc20Transfers[0]?.from}"`;
       const [senderProfileId] = await napaDB.query(getSenderProfileId)
-      const getSenderDeviceToken = `SELECT deviceToken from users WHERE profileId = "${senderProfileId[0]?.profileId}"`
+      const getSenderDeviceToken = `SELECT deviceToken FROM users WHERE profileId = "${senderProfileId[0]?.profileId}"`
       const [senderDeviceToken] = await napaDB.query(getSenderDeviceToken)      
 
       const getReceiverProfileId = `SELECT profileId FROM napa_accounts WHERE NWA_1_AC = "${body?.erc20Transfers[0]?.to}" OR NWA_2_AC = "${body?.erc20Transfers[0]?.to}" OR NWA_3_AC = "${body?.erc20Transfers[0]?.to}" OR NWA_4_AC = "${body?.erc20Transfers[0]?.to}" OR NWA_5_AC = "${body?.erc20Transfers[0]?.to}"`;
       const [receiverProfileId] = await napaDB.query(getReceiverProfileId)
-      const getReceiverDeviceToken = `SELECT deviceToken from users WHERE profileId = "${receiverProfileId[0]?.profileId}"`
+      const getReceiverDeviceToken = `SELECT deviceToken FROM users WHERE profileId = "${receiverProfileId[0]?.profileId}"`
       const [receiverDeviceToken] = await napaDB.query(getReceiverDeviceToken)
 
       console.log("senderInfo====>>>", senderProfileId[0]?.profileId, senderDeviceToken[0]?.deviceToken);
@@ -43,6 +43,8 @@ const webhook = async (req, res) => {
       "Stream address added successfully."
     );
   } catch (e) {
+    console.log("token error",e);
+    
     return res.status(400).json();
   }
 };
