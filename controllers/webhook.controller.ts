@@ -7,14 +7,14 @@ const webhook = async (req, res) => {
   const { body } = req;
   try {
     console.log(body);
-    if (body?.erc20Transfers[0]) {      
+    if (body?.erc20Transfers[0] && body?.confirmed) {      
    
       const senderDeviceToken = await getDeviceToken(body?.erc20Transfers[0]?.from)
       const receiverDeviceToken = await getDeviceToken(body?.erc20Transfers[0]?.to)
       
-      sendNotification(senderDeviceToken,`${body?.erc20Transfers[0]?.tokenSymbol} sent`,`Send Transaction ${body?.erc20Transfers[0]?.value / 10 ** 18} ${body?.erc20Transfers[0]?.tokenSymbol} is Complete`)
+      sendNotification(senderDeviceToken,`${body?.erc20Transfers[0]?.tokenSymbol} sent`,`Send Transaction ${body?.erc20Transfers[0]?.valueWithDecimals} ${body?.erc20Transfers[0]?.tokenSymbol} is Complete`)
 
-      sendNotification(receiverDeviceToken,`${body?.erc20Transfers[0]?.tokenSymbol} received`,`${body?.erc20Transfers[0]?.value / 10 ** 18} ${body?.erc20Transfers[0]?.tokenSymbol} has been received`)
+      sendNotification(receiverDeviceToken,`${body?.erc20Transfers[0]?.tokenSymbol} received`,`${body?.erc20Transfers[0]?.valueWithDecimals} ${body?.erc20Transfers[0]?.tokenSymbol} has been received`)
 
       // @ts-ignore
       global.SocketService.handleStreamingERC20TransfersToAccount({
