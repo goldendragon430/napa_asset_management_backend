@@ -4,7 +4,7 @@ import { decryptString } from "./encryption";
 export const getPhraseByProfileId = async (profileId: string) => {
   const options = {
     method: "GET",
-    url: `https://napa-backend-staging.napasociety.io/getPhraseByProfileId?profileId=${profileId}`,
+    url: `${process.env.API_URL}/getPhraseByProfileId?profileId=${profileId}`,
   };
   const response = await axios(options);
   return decryptString(response?.data?.data);
@@ -13,7 +13,7 @@ export const getPhraseByProfileId = async (profileId: string) => {
 export const getPrivateKeyByProfileId = async (profileId: string) => {
   const options = {
     method: "GET",
-    url: `https://napa-backend-staging.napasociety.io/getPrivateKeyByProfileId?profileId=${profileId}`,
+    url: `${process.env.API_URL}/getPrivateKeyByProfileId?profileId=${profileId}`,
   };
   const response = await axios(options);
   const activeWalletAC = response?.data?.data?.activeWalletAC
@@ -23,7 +23,7 @@ export const getPrivateKeyByProfileId = async (profileId: string) => {
 export const getDeviceToken = async (address: string) => {
   const options = {
     method: "GET",
-    url: `https://napa-backend-staging.napasociety.io/getDeviceToken?address=${address}`,
+    url: `${process.env.API_URL}/getDeviceToken?address=${address}`,
   };
   const response = await axios(options);
   const deviceToken = response?.data?.data?.deviceToken
