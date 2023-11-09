@@ -229,10 +229,9 @@ const getTokenTransactions = async (req, res) => {
 
     const tokens = req.query.tokenAddresses;
 
-    await Moralis.EvmApi.token.getErc20Transfers({
+    await Moralis.EvmApi.token.getWalletTokenTransfers({
       "chain": hex,
-      "contractAddresses": [tokens],
-      "walletAddresses": [publicKey.toString()]
+      "address": publicKey.toString()
     }).then((response: any) => {
       return ApiResponse.successResponseWithData(
         res,
@@ -983,7 +982,6 @@ const fetchNFTTransfers = async (req, res) => {
     await Moralis.EvmApi.nft.getWalletNFTTransfers({
       "chain": hex.toString(),
       "format": "decimal",
-      "direction": "both",
       "address": (req.query.account).toString()
     }).then((response: any) => {
       console.log(response, "response");
@@ -1029,7 +1027,6 @@ const fetchAllMixedTransactions = async (req, res) => {
     await Moralis.EvmApi.nft.getWalletNFTTransfers({
       "chain": hex.toString(),
       "format": "decimal",
-      "direction": "both",
       "address": (req.query.account).toString()
     }).then(async (nftResponse: any) => {
       const tokenResponse = await Moralis.EvmApi.token.getWalletTokenTransfers({
