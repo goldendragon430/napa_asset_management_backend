@@ -142,13 +142,13 @@ const napaTokenBalance = async (req, res) => {
     const chainData = await getChain(req.query.chainId);
     const hex = String(chainData?.hex);
 
-    // const tokenAddress:string[] = [process.env.napa_token];
-    const napaTokenAddress = process.env.napa_token;
+    // const tokenAddress:string[] = [process.env.CONTRACT_ADDRESS];
+    const napaTokenAddress = process.env.CONTRACT_ADDRESS;
     console.log(napaTokenAddress, "napaTokenAddress")
 
     await Moralis.EvmApi.token.getWalletTokenBalances({
       "chain": hex,
-      "tokenAddresses": [process.env.napa_token],
+      "tokenAddresses": [process.env.CONTRACT_ADDRESS],
       "address": (publicKey).toString()
     }).then((response: any) => {
       return ApiResponse.successResponseWithData(
@@ -1280,7 +1280,7 @@ const getGasFees = async (req, res) => {
     let gasFeesInEther;
 
     try {
-      const gasEstimate = await contract.estimateGas[functionName](...allParams);
+      const gasEstimate = await contract.estimateGas.transfer(...allParams);
       gasPrice = await signer.getGasPrice();
       gasFees = gasEstimate.mul(gasPrice);
       gasFeesInEther = ethers.utils.formatEther(gasFees);
